@@ -70,12 +70,73 @@ export interface AppDataType {
 }
 
 export const isDbAvailable = () => {
-  return Boolean(process.env.SQL_HOST && process.env.SQL_USER && process.env.SQL_DB_NAME);
+  return Boolean(
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    (process.env.SQL_HOST && process.env.SQL_USER && process.env.SQL_DB_NAME) ||
+    (process.env.POSTGRES_HOST && process.env.POSTGRES_USER && process.env.POSTGRES_DB)
+  );
 };
 
 export async function seedInitialAdmin() {
   if (!isDbAvailable()) return;
   try {
+    const { createPool } = await import('./index.ts');
+    const pool = createPool();
+
+    // Ensure database tables exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        static_id TEXT PRIMARY KEY,
+        nickname TEXT NOT NULL,
+        discord TEXT NOT NULL,
+        password TEXT,
+        role TEXT NOT NULL DEFAULT 'instructor',
+        rank TEXT,
+        callsign TEXT,
+        avatar_url TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS reports (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        nickname TEXT NOT NULL,
+        discord TEXT NOT NULL,
+        date TEXT NOT NULL,
+        checked_reports INTEGER NOT NULL DEFAULT 0,
+        gatherings INTEGER NOT NULL DEFAULT 0,
+        arrests INTEGER NOT NULL DEFAULT 0,
+        events INTEGER NOT NULL DEFAULT 0,
+        proof_url TEXT,
+        notes TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        reviewed_by TEXT,
+        reviewed_at TEXT,
+        review_comment TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS archives (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL,
+        closed_by TEXT NOT NULL,
+        closed_at TEXT NOT NULL,
+        reports_count INTEGER NOT NULL DEFAULT 0,
+        total_points INTEGER NOT NULL DEFAULT 0,
+        total_checked_reports INTEGER NOT NULL DEFAULT 0,
+        total_gatherings INTEGER NOT NULL DEFAULT 0,
+        total_arrests INTEGER NOT NULL DEFAULT 0,
+        total_events INTEGER NOT NULL DEFAULT 0,
+        archived_reports JSONB NOT NULL,
+        instructor_summary JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE TABLE IF NOT EXISTS admins (
+        static_id TEXT PRIMARY KEY
+      );
+    `);
+
     const existingStanislav = await db.select().from(users).where(eq(users.staticId, '21358'));
     if (existingStanislav.length === 0) {
       await db.insert(users).values({
@@ -91,7 +152,7 @@ export async function seedInitialAdmin() {
       await db.insert(admins).values({ staticId: '21358' }).onConflictDoNothing();
     }
   } catch (err) {
-    console.error('Error seeding initial admin in Cloud SQL:', err);
+    console.error('Error seeding initial admin or creating tables in PostgreSQL:', err);
   }
 }
 
