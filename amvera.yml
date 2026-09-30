@@ -1,13 +1,4 @@
 meta:
-  environment: node
-  toolchain:
-    name: npm
-    version: 20
-
+  environment: docker
 build:
-  pipeline:
-    - npm install
-    - npm run build
-
-run:
-  command: npm run start
+  dockerfile: Dockerfile
