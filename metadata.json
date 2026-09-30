@@ -1,0 +1,6 @@
+{
+  "name": "Управление В — Система отчётности инструкторов",
+  "description": "Веб-приложение для отдела 'В': отчётность инструкторов, мониторинг активности, статистика и администрирование.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

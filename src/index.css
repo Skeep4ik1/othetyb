@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --text-primary: #0f172a;
+  }
+
+  .dark {
+    --bg-main: #0a0a0a;
+    --bg-card: #121212;
+    --text-primary: #f4f4f5;
+  }
+
+  html {
+    font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  html.dark {
+    background-color: #0a0a0a;
+    color: #f4f4f5;
+    color-scheme: dark;
+  }
+
+  html:not(.dark) {
+    background-color: #f8fafc;
+    color: #0f172a;
+    color-scheme: light;
+  }
+
+  body {
+    background-color: transparent;
+  }
+
+  h1, h2, h3, .font-syne, .font-unbounded {
+    font-family: 'Unbounded', 'Montserrat', sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Tactical Ambient Grid Background */
+.tactical-red-blue-bg {
+  background-size: 24px 24px;
+}
+
+html.dark .tactical-red-blue-bg {
+  background-color: #0a0a0a;
+  background-image: radial-gradient(#1f1f1f 1px, transparent 1px);
+}
+
+html:not(.dark) .tactical-red-blue-bg {
+  background-color: #f8fafc;
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+html.dark ::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 9999px;
+}
+html:not(.dark) ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
