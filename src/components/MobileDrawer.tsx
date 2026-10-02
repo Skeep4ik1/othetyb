@@ -87,6 +87,10 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                     <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/50">
                       ★ Начальник
                     </span>
+                  ) : currentUser.role === 'senior_instructor' ? (
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/50">
+                      ★ Зам. начальника
+                    </span>
                   ) : (
                     <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/50">
                       Инструктор отдела

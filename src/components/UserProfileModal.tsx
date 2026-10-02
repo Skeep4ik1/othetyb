@@ -63,7 +63,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           <div className="space-y-4">
             {/* Profile Card Header */}
             <div className="flex items-center space-x-4 p-4 rounded-2xl bg-black border border-zinc-800">
-              <div className="w-16 h-16 rounded-2xl bg-zinc-800 border border-zinc-700 overflow-hidden flex items-center justify-center font-black text-xl text-white shrink-0 relative">
+              <div className={`w-16 h-16 rounded-2xl bg-zinc-800 border overflow-hidden flex items-center justify-center font-black text-xl text-white shrink-0 relative ${
+                isSuperAdmin ? 'border-red-500/60' : isAdmin ? 'border-amber-500/60' : currentUser.role === 'senior_instructor' ? 'border-purple-500/60' : 'border-sky-500/60'
+              }`}>
                 {currentUser.avatarUrl ? (
                   <img 
                     src={currentUser.avatarUrl} 
@@ -83,19 +85,19 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 </div>
                 <div>
                   {isSuperAdmin ? (
-                    <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/50">
+                    <span className="text-[10px] font-mono font-black px-2.5 py-1 rounded-lg bg-red-500/20 text-red-400 border border-red-500/50 inline-flex items-center">
                       ★ Куратор
                     </span>
                   ) : isAdmin ? (
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/50">
+                    <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/50 inline-flex items-center">
                       ★ Начальник
                     </span>
                   ) : currentUser.role === 'senior_instructor' ? (
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/50">
+                    <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/50 inline-flex items-center">
                       ★ Зам. начальника
                     </span>
                   ) : (
-                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/50">
+                    <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-400 border border-sky-500/50 inline-flex items-center">
                       Инструктор отдела
                     </span>
                   )}

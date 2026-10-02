@@ -305,8 +305,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-zinc-100 group-hover:text-slate-700 dark:group-hover:text-white transition-colors truncate">
                     {currentUser.nickname}
                   </span>
-                  <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-mono truncate">
-                    #{currentUser.staticId}
+                  <span className={`text-[10px] font-mono truncate font-bold ${
+                    isSuperAdmin ? 'text-red-500 dark:text-red-400' : isAdmin ? 'text-amber-600 dark:text-amber-300' : currentUser.role === 'senior_instructor' ? 'text-purple-600 dark:text-purple-300' : 'text-sky-600 dark:text-sky-400'
+                  }`}>
+                    {isSuperAdmin ? '★ Куратор' : isAdmin ? '★ Начальник' : currentUser.role === 'senior_instructor' ? '★ Зам. начальника' : 'Инструктор'}
                   </span>
                 </div>
 
