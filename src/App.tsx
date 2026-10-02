@@ -84,13 +84,28 @@ function MainApp() {
       const serverDb = await fetchDbData();
       if (serverDb) {
         if (serverDb.users && serverDb.users.length > 0) {
-          setUsers(serverDb.users);
-          localStorage.setItem('depV_users', JSON.stringify(serverDb.users));
+          const serverUserMap = new Map<string, User>();
+          serverDb.users.forEach((u) => serverUserMap.set(u.staticId, u));
+
+          let mergedUsers = [...serverDb.users];
+
+          // Check if stored local users have any missing users that server doesn't have yet
+          if (stored.users) {
+            for (const localU of stored.users) {
+              if (localU.staticId && !serverUserMap.has(localU.staticId)) {
+                mergedUsers.push(localU);
+                apiSaveUser(localU);
+              }
+            }
+          }
+
+          setUsers(mergedUsers);
+          localStorage.setItem('depV_users', JSON.stringify(mergedUsers));
 
           // Refresh current user if exists
           const currentStatic = stored.currentUser?.staticId;
           if (currentStatic) {
-            const updatedCurrent = serverDb.users.find((u) => u.staticId === currentStatic);
+            const updatedCurrent = mergedUsers.find((u) => u.staticId === currentStatic);
             if (updatedCurrent) {
               setCurrentUser(updatedCurrent);
               localStorage.setItem('depV_user', JSON.stringify(updatedCurrent));
@@ -125,7 +140,7 @@ function MainApp() {
     const interval = setInterval(async () => {
       const serverDb = await fetchDbData();
       if (serverDb) {
-        if (serverDb.users) setUsers(serverDb.users);
+        if (serverDb.users && serverDb.users.length > 0) setUsers(serverDb.users);
         if (serverDb.reports) setReports(serverDb.reports);
         if (serverDb.archives) setArchives(serverDb.archives);
         if (serverDb.admins) setAdmins(serverDb.admins);
@@ -141,7 +156,7 @@ function MainApp() {
     if (!currentUser?.staticId) return;
 
     const sendPing = async () => {
-      const online = await apiSendHeartbeat(currentUser.staticId);
+      const online = await apiSendHeartbeat(currentUser.staticId, currentUser);
       if (online) setOnlineUsers(online);
     };
 

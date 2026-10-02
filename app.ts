@@ -291,11 +291,27 @@ app.get('/api/db', async (req, res) => {
   });
 });
 
-app.post('/api/heartbeat', (req, res) => {
-  const { staticId } = req.body;
+app.post('/api/heartbeat', async (req, res) => {
+  const { staticId, user } = req.body;
   if (staticId) {
     activePresence.set(String(staticId), Date.now());
   }
+
+  if (user && user.staticId) {
+    const data = readData();
+    if (!data.users.some((u) => u.staticId === user.staticId)) {
+      data.users.push(user);
+      writeData(data);
+    }
+    if (isDbAvailable()) {
+      try {
+        await upsertUserInDb(user);
+      } catch {
+        // ignore
+      }
+    }
+  }
+
   res.json({ success: true, onlineUsers: getOnlineStaticIds() });
 });
 

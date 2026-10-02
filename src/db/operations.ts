@@ -240,7 +240,7 @@ export async function seedInitialAdmin() {
 
     const jsonFileToUse = findServerDataJson();
 
-    if (userCount === 0 && jsonFileToUse) {
+    if (jsonFileToUse) {
       try {
         const rawContent = fs.readFileSync(jsonFileToUse, 'utf-8');
         const jsonAppData = JSON.parse(rawContent);
