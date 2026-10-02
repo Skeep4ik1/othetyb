@@ -154,7 +154,7 @@ export async function seedInitialAdmin() {
       );
     `);
 
-    // Auto-migrate JSON data into fresh PostgreSQL DB if users table is empty/has <= 1 user
+    // Auto-migrate JSON data into fresh PostgreSQL DB ONLY if users table is empty
     const userCountRes = await pool.query('SELECT COUNT(*) FROM users');
     const userCount = parseInt(userCountRes.rows[0].count, 10);
 
@@ -174,7 +174,7 @@ export async function seedInitialAdmin() {
 
     const jsonFileToUse = findServerDataJson();
 
-    if (jsonFileToUse) {
+    if (userCount === 0 && jsonFileToUse) {
       try {
         const rawContent = fs.readFileSync(jsonFileToUse, 'utf-8');
         const jsonAppData = JSON.parse(rawContent);
@@ -184,8 +184,7 @@ export async function seedInitialAdmin() {
             await pool.query(
               `INSERT INTO users (static_id, nickname, discord, password, role, rank, callsign, avatar_url, created_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-               ON CONFLICT (static_id) DO UPDATE SET
-               nickname = EXCLUDED.nickname, discord = EXCLUDED.discord, role = EXCLUDED.role, rank = EXCLUDED.rank, callsign = EXCLUDED.callsign, avatar_url = EXCLUDED.avatar_url`,
+               ON CONFLICT (static_id) DO NOTHING`,
               [u.staticId, u.nickname, u.discord, u.password || null, u.role || 'instructor', u.rank || null, u.callsign || null, u.avatarUrl || null, u.createdAt ? new Date(u.createdAt) : new Date()]
             );
           }
