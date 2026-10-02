@@ -90,8 +90,8 @@ export const isDbAvailable = () => {
   return Boolean(
     process.env.DATABASE_URL ||
     process.env.POSTGRES_URL ||
-    (process.env.SQL_HOST && process.env.SQL_USER && process.env.SQL_DB_NAME) ||
-    (process.env.POSTGRES_HOST && process.env.POSTGRES_USER && process.env.POSTGRES_DB)
+    process.env.POSTGRES_HOST ||
+    process.env.SQL_HOST
   );
 };
 
