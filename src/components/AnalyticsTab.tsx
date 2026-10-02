@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { 
   BarChart3, 
@@ -12,11 +12,12 @@ import {
   Layers,
   Sparkles,
   CalendarCheck,
-  ShieldCheck
+  ShieldCheck,
+  Calendar
 } from 'lucide-react';
 import { Report } from '../types';
 import { StatCard } from './StatCard';
-import { calculatePoints, exportReportsToCSV } from '../utils/storage';
+import { calculatePoints, exportReportsToCSV, parseReportDate } from '../utils/storage';
 
 interface AnalyticsTabProps {
   reports: Report[];
@@ -24,24 +25,50 @@ interface AnalyticsTabProps {
 }
 
 export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ reports, showToast }) => {
+  const [period, setPeriod] = useState<'all' | 'today' | '7d' | '30d'>('all');
+
+  const filteredReports = useMemo(() => {
+    if (period === 'all') return reports;
+
+    const now = Date.now();
+    if (period === 'today') {
+      const startOfToday = new Date();
+      startOfToday.setHours(0, 0, 0, 0);
+      const startMs = startOfToday.getTime();
+      return reports.filter((r) => parseReportDate(r.date) >= startMs);
+    }
+
+    if (period === '7d') {
+      const cutoffMs = now - 7 * 24 * 60 * 60 * 1000;
+      return reports.filter((r) => parseReportDate(r.date) >= cutoffMs);
+    }
+
+    if (period === '30d') {
+      const cutoffMs = now - 30 * 24 * 60 * 60 * 1000;
+      return reports.filter((r) => parseReportDate(r.date) >= cutoffMs);
+    }
+
+    return reports;
+  }, [reports, period]);
+
   const stats = useMemo(() => {
-    const totalCheckedReports = reports.reduce(
+    const totalCheckedReports = filteredReports.reduce(
       (sum, r) => sum + (r.checkedReports ?? r.checked ?? 0),
       0
     );
-    const totalGatherings = reports.reduce(
+    const totalGatherings = filteredReports.reduce(
       (sum, r) => sum + (r.gatherings ?? r.gathered ?? 0),
       0
     );
-    const totalArrests = reports.reduce(
+    const totalArrests = filteredReports.reduce(
       (sum, r) => sum + (r.arrests ?? 0),
       0
     );
-    const totalEvents = reports.reduce(
+    const totalEvents = filteredReports.reduce(
       (sum, r) => sum + (r.events ?? r.trainings ?? 0),
       0
     );
-    const totalPoints = reports.reduce((sum, r) => sum + calculatePoints(r), 0);
+    const totalPoints = filteredReports.reduce((sum, r) => sum + calculatePoints(r), 0);
 
     // Leaderboard by instructor
     const instructorMap = new Map<
@@ -59,7 +86,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ reports, showToast }
       }
     >();
 
-    reports.forEach((r) => {
+    filteredReports.forEach((r) => {
       const existing = instructorMap.get(r.userId) || {
         nickname: r.nickname,
         staticId: r.userId,
@@ -106,13 +133,14 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ reports, showToast }
       arrestsPercent,
       eventsPercent,
       activeInstructorsCount: instructorMap.size,
+      reportsCount: filteredReports.length,
     };
-  }, [reports]);
+  }, [filteredReports]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
       {/* Header and Export Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#121212] border border-zinc-800 rounded-3xl p-5 sm:p-6 backdrop-blur-xl shadow-xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#121212] border border-zinc-800 rounded-3xl p-5 sm:p-6 backdrop-blur-xl shadow-xl">
         <div className="flex items-center space-x-3.5">
           <div className="w-12 h-12 rounded-2xl bg-white text-black flex items-center justify-center font-black shadow-lg shrink-0">
             <BarChart3 className="w-6 h-6 stroke-black" />
@@ -127,16 +155,40 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ reports, showToast }
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            exportReportsToCSV(reports);
-            showToast('Отчёт сформирован и загружен в CSV', 'success');
-          }}
-          className="flex items-center justify-center space-x-2 px-4 py-2.5 rounded-2xl font-bold text-xs bg-black hover:bg-zinc-800 border border-zinc-700 text-white transition-colors shadow-sm cursor-pointer self-start sm:self-auto font-mono"
-        >
-          <Download className="w-4 h-4 text-white" />
-          <span>Скачать ведомость (CSV)</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Period Selector Pill */}
+          <div className="flex items-center space-x-1 p-1 bg-black border border-zinc-800 rounded-2xl text-xs font-mono shadow-inner">
+            {[
+              { id: 'all', label: 'Всё время' },
+              { id: 'today', label: 'Сегодня' },
+              { id: '7d', label: '7 дней' },
+              { id: '30d', label: '30 дней' },
+            ].map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setPeriod(p.id as typeof period)}
+                className={`px-3 py-1.5 rounded-xl font-extrabold transition-all cursor-pointer ${
+                  period === p.id
+                    ? 'bg-zinc-800 text-red-400 shadow-md border border-zinc-700/60'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => {
+              exportReportsToCSV(filteredReports);
+              showToast('Отчёт сформирован и загружен в CSV', 'success');
+            }}
+            className="flex items-center justify-center space-x-2 px-4 py-2.5 rounded-2xl font-bold text-xs bg-black hover:bg-zinc-800 border border-zinc-700 text-white transition-colors shadow-sm cursor-pointer font-mono"
+          >
+            <Download className="w-4 h-4 text-white" />
+            <span className="hidden sm:inline">Скачать ведомость (CSV)</span>
+          </button>
+        </div>
       </div>
 
       {/* 4 Official Activity Stat Cards */}

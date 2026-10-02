@@ -23,7 +23,7 @@ import {
   FolderArchive
 } from 'lucide-react';
 import { Report, ReportStatus, User } from '../types';
-import { SUPER_ADMIN_ID, calculatePoints, exportReportsToCSV } from '../utils/storage';
+import { SUPER_ADMIN_ID, calculatePoints, exportReportsToCSV, parseReportDate } from '../utils/storage';
 
 interface AdminPanelTabProps {
   reports: Report[];
@@ -66,8 +66,19 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
   const [summaryPeriod, setSummaryPeriod] = useState<'all' | 'today' | '7d' | '30d'>('all');
 
   const filteredReports = useMemo(() => {
+    const now = Date.now();
     return reports
       .filter((r) => {
+        if (summaryPeriod === 'today') {
+          const startOfToday = new Date();
+          startOfToday.setHours(0, 0, 0, 0);
+          if (parseReportDate(r.date) < startOfToday.getTime()) return false;
+        } else if (summaryPeriod === '7d') {
+          if (parseReportDate(r.date) < now - 7 * 24 * 60 * 60 * 1000) return false;
+        } else if (summaryPeriod === '30d') {
+          if (parseReportDate(r.date) < now - 30 * 24 * 60 * 60 * 1000) return false;
+        }
+
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase();
           const matchNick = r.nickname.toLowerCase().includes(q);
@@ -77,8 +88,8 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
         }
         return true;
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [reports, searchQuery]);
+      .sort((a, b) => parseReportDate(b.date) - parseReportDate(a.date));
+  }, [reports, searchQuery, summaryPeriod]);
 
   const summaryData = useMemo(() => {
     let targetReports = reports;
@@ -87,13 +98,13 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
     if (summaryPeriod === 'today') {
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
-      targetReports = reports.filter((r) => new Date(r.date).getTime() >= startOfToday.getTime());
+      targetReports = reports.filter((r) => parseReportDate(r.date) >= startOfToday.getTime());
     } else if (summaryPeriod === '7d') {
       const cutoff = now - 7 * 24 * 60 * 60 * 1000;
-      targetReports = reports.filter((r) => new Date(r.date).getTime() >= cutoff);
+      targetReports = reports.filter((r) => parseReportDate(r.date) >= cutoff);
     } else if (summaryPeriod === '30d') {
       const cutoff = now - 30 * 24 * 60 * 60 * 1000;
-      targetReports = reports.filter((r) => new Date(r.date).getTime() >= cutoff);
+      targetReports = reports.filter((r) => parseReportDate(r.date) >= cutoff);
     }
 
     const totalReportsCount = targetReports.length;
@@ -464,11 +475,35 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
         {/* Right 2 Columns: All Accepted Reports Log */}
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-[#121212] border border-zinc-800 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="flex items-center space-x-2">
-              <FileText className="w-5 h-5 text-white" />
-              <h3 className="font-extrabold text-white text-base font-['Syne']">
-                Журнал принятых рапортов ({filteredReports.length})
-              </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center space-x-2">
+                <FileText className="w-5 h-5 text-white" />
+                <h3 className="font-extrabold text-white text-base font-['Syne']">
+                  Журнал принятых рапортов ({filteredReports.length})
+                </h3>
+              </div>
+
+              {/* Period Selector Pills */}
+              <div className="flex items-center space-x-1 p-1 bg-black border border-zinc-800 rounded-2xl text-xs font-mono shadow-inner shrink-0">
+                {[
+                  { id: 'all', label: 'Всё время' },
+                  { id: 'today', label: 'Сегодня' },
+                  { id: '7d', label: '7 дней' },
+                  { id: '30d', label: '30 дней' },
+                ].map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => setSummaryPeriod(p.id as typeof summaryPeriod)}
+                    className={`px-3 py-1.5 rounded-xl font-extrabold transition-all cursor-pointer ${
+                      summaryPeriod === p.id
+                        ? 'bg-zinc-800 text-red-400 shadow-md border border-zinc-700/60'
+                        : 'text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Search Input */}

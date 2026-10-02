@@ -2,6 +2,26 @@ import { Report, User } from '../types';
 
 export const SUPER_ADMIN_ID = '21358'; // Станислав Яров
 
+export const parseReportDate = (dateStr?: string | null): number => {
+  if (!dateStr) return 0;
+  if (/^\d{10,13}$/.test(dateStr)) {
+    const num = Number(dateStr);
+    return num < 1e11 ? num * 1000 : num;
+  }
+  const parsed = new Date(dateStr).getTime();
+  if (!isNaN(parsed)) return parsed;
+
+  const ruMatch = dateStr.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
+  if (ruMatch) {
+    const day = parseInt(ruMatch[1], 10);
+    const month = parseInt(ruMatch[2], 10) - 1;
+    const year = parseInt(ruMatch[3], 10);
+    return new Date(year, month, day).getTime();
+  }
+
+  return 0;
+};
+
 export const DEFAULT_USERS: User[] = [
   {
     nickname: 'Станислав Яров',
