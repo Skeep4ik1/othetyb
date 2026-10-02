@@ -5,9 +5,19 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const LOCAL_DATA_FILE = path.join(__dirname, '../../server_data.json');
+const getDbDirname = () => {
+  if (typeof __dirname !== 'undefined' && __dirname) return __dirname;
+  if (typeof import.meta !== 'undefined' && import.meta && import.meta.url) {
+    try {
+      return path.dirname(fileURLToPath(import.meta.url));
+    } catch {
+      // fallback
+    }
+  }
+  return process.cwd();
+};
+const dbDirname = getDbDirname();
+const LOCAL_DATA_FILE = path.join(dbDirname, '../../server_data.json');
 
 export interface UserType {
   nickname: string;
@@ -148,9 +158,13 @@ export async function seedInitialAdmin() {
     const userCountRes = await pool.query('SELECT COUNT(*) FROM users');
     const userCount = parseInt(userCountRes.rows[0].count, 10);
 
-    if (userCount <= 1 && fs.existsSync(LOCAL_DATA_FILE)) {
+    const jsonFileToUse = fs.existsSync(LOCAL_DATA_FILE)
+      ? LOCAL_DATA_FILE
+      : path.join(process.cwd(), 'server_data.json');
+
+    if (userCount <= 1 && fs.existsSync(jsonFileToUse)) {
       try {
-        const rawContent = fs.readFileSync(LOCAL_DATA_FILE, 'utf-8');
+        const rawContent = fs.readFileSync(jsonFileToUse, 'utf-8');
         const jsonAppData = JSON.parse(rawContent);
 
         if (Array.isArray(jsonAppData.users)) {

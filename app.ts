@@ -16,11 +16,21 @@ import {
   deleteUserFromDb,
 } from './src/db/operations.ts';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const getAppDirname = () => {
+  if (typeof __dirname !== 'undefined' && __dirname) return __dirname;
+  if (typeof import.meta !== 'undefined' && import.meta && import.meta.url) {
+    try {
+      return path.dirname(fileURLToPath(import.meta.url));
+    } catch {
+      // fallback
+    }
+  }
+  return process.cwd();
+};
+const appDirname = getAppDirname();
 
 const DATA_FILE = path.join(process.env.TMPDIR || '/tmp', 'server_data.json');
-const LOCAL_DATA_FILE = path.join(__dirname, 'server_data.json');
+const LOCAL_DATA_FILE = path.join(appDirname, 'server_data.json');
 
 interface User {
   nickname: string;
