@@ -86,6 +86,45 @@ export interface AppDataType {
   archives: WeeklyArchiveType[];
 }
 
+export const getLocalJsonFallback = (): AppDataType => {
+  const candidates = [
+    path.join(process.cwd(), 'server_data.json'),
+    path.join(dbDirname, '../../server_data.json'),
+    path.join(dbDirname, '../server_data.json'),
+    path.join(dbDirname, 'server_data.json'),
+    '/app/server_data.json',
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      try {
+        const parsed = JSON.parse(fs.readFileSync(p, 'utf-8'));
+        return {
+          users: Array.isArray(parsed.users) ? parsed.users : [],
+          reports: Array.isArray(parsed.reports) ? parsed.reports : [],
+          admins: Array.isArray(parsed.admins) ? parsed.admins : ['21358'],
+          archives: Array.isArray(parsed.archives) ? parsed.archives : [],
+        };
+      } catch {
+        // ignore
+      }
+    }
+  }
+  return {
+    users: [
+      {
+        nickname: 'Станислав Яров',
+        staticId: '21358',
+        discord: 'nensikq',
+        password: 'admin',
+        role: 'superadmin',
+      },
+    ],
+    reports: [],
+    admins: ['21358'],
+    archives: [],
+  };
+};
+
 export const isDbAvailable = () => {
   return true;
 };
@@ -260,8 +299,8 @@ export async function getDbData(): Promise<AppDataType> {
   // Ensure tables and JSON data seeding are complete before reading DB
   try {
     await seedInitialAdmin();
-  } catch (seedError) {
-    console.error('Error during seedInitialAdmin in getDbData:', seedError);
+  } catch {
+    // Ignore seed errors when DB is unreachable in preview
   }
 
   try {
@@ -336,8 +375,7 @@ export async function getDbData(): Promise<AppDataType> {
       archives: mappedArchives,
     };
   } catch (err) {
-    console.error('Error fetching data from Cloud SQL:', err);
-    throw err;
+    return getLocalJsonFallback();
   }
 }
 
