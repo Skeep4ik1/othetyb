@@ -516,7 +516,17 @@ export async function createReportInDb(report: ReportType) {
     }).onConflictDoUpdate({
       target: reports.id,
       set: {
-        status: report.status,
+        userId: report.userId,
+        nickname: report.nickname,
+        discord: report.discord,
+        date: report.date,
+        checkedReports: report.checkedReports || report.checked || 0,
+        gatherings: report.gatherings || report.gathered || 0,
+        arrests: report.arrests || 0,
+        events: report.events || report.trainings || 0,
+        proofUrl: report.proofUrl,
+        notes: report.notes,
+        status: report.status || 'pending',
         reviewedBy: report.reviewedBy,
         reviewedAt: report.reviewedAt,
         reviewComment: report.reviewComment,

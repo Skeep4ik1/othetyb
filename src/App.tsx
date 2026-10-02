@@ -114,8 +114,21 @@ function MainApp() {
         }
 
         if (serverDb.reports) {
-          setReports(serverDb.reports);
-          localStorage.setItem('depV_reports', JSON.stringify(serverDb.reports));
+          const serverReportMap = new Map<string, Report>();
+          serverDb.reports.forEach((r) => serverReportMap.set(r.id, r));
+
+          let mergedReports = [...serverDb.reports];
+          if (stored.reports) {
+            for (const localR of stored.reports) {
+              if (localR.id && !serverReportMap.has(localR.id)) {
+                mergedReports.unshift(localR);
+                apiAddReport(localR);
+              }
+            }
+          }
+
+          setReports(mergedReports);
+          localStorage.setItem('depV_reports', JSON.stringify(mergedReports));
         }
 
         if (serverDb.archives) {
