@@ -86,7 +86,23 @@ export interface AppDataType {
   archives: WeeklyArchiveType[];
 }
 
-export const getLocalJsonFallback = (): AppDataType => {
+let inMemoryStore: AppDataType = {
+  users: [
+    {
+      nickname: 'Станислав Яров',
+      staticId: '21358',
+      discord: 'nensikq',
+      password: 'admin',
+      role: 'superadmin',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    },
+  ],
+  reports: [],
+  admins: ['21358'],
+  archives: [],
+};
+
+const initInMemoryStore = () => {
   const candidates = [
     path.join(process.cwd(), 'server_data.json'),
     path.join(dbDirname, '../../server_data.json'),
@@ -98,31 +114,34 @@ export const getLocalJsonFallback = (): AppDataType => {
     if (fs.existsSync(p)) {
       try {
         const parsed = JSON.parse(fs.readFileSync(p, 'utf-8'));
-        return {
-          users: Array.isArray(parsed.users) ? parsed.users : [],
+        inMemoryStore = {
+          users: Array.isArray(parsed.users) ? parsed.users : inMemoryStore.users,
           reports: Array.isArray(parsed.reports) ? parsed.reports : [],
           admins: Array.isArray(parsed.admins) ? parsed.admins : ['21358'],
           archives: Array.isArray(parsed.archives) ? parsed.archives : [],
         };
+        break;
       } catch {
         // ignore
       }
     }
   }
-  return {
-    users: [
-      {
-        nickname: 'Станислав Яров',
-        staticId: '21358',
-        discord: 'nensikq',
-        password: 'admin',
-        role: 'superadmin',
-      },
-    ],
-    reports: [],
-    admins: ['21358'],
-    archives: [],
-  };
+};
+initInMemoryStore();
+
+export const updateInMemoryStore = (updater: (prev: AppDataType) => AppDataType) => {
+  inMemoryStore = updater(inMemoryStore);
+  try {
+    const targetFile = path.join(process.cwd(), 'server_data.json');
+    fs.writeFileSync(targetFile, JSON.stringify(inMemoryStore, null, 2), 'utf-8');
+  } catch {
+    // ignore
+  }
+  return inMemoryStore;
+};
+
+export const getLocalJsonFallback = (): AppDataType => {
+  return inMemoryStore;
 };
 
 export const isDbAvailable = () => {
@@ -368,18 +387,33 @@ export async function getDbData(): Promise<AppDataType> {
 
     const adminList = dbAdmins.map((a) => a.staticId);
 
-    return {
+    const freshResult = {
       users: mappedUsers,
       reports: mappedReports,
       admins: adminList,
       archives: mappedArchives,
     };
+
+    updateInMemoryStore(() => freshResult);
+
+    return freshResult;
   } catch (err) {
     return getLocalJsonFallback();
   }
 }
 
 export async function upsertUserInDb(user: UserType) {
+  updateInMemoryStore((prev) => {
+    const idx = prev.users.findIndex((u) => u.staticId === user.staticId);
+    const updatedUsers = [...prev.users];
+    if (idx >= 0) {
+      updatedUsers[idx] = { ...updatedUsers[idx], ...user };
+    } else {
+      updatedUsers.push(user);
+    }
+    return { ...prev, users: updatedUsers };
+  });
+
   if (!isDbAvailable()) return;
   try {
     await db.insert(users).values({
@@ -409,6 +443,15 @@ export async function upsertUserInDb(user: UserType) {
 }
 
 export async function updateUserRoleInDb(staticId: string, role: string) {
+  updateInMemoryStore((prev) => {
+    const updatedUsers = prev.users.map((u) => (u.staticId === staticId ? { ...u, role: role as UserType['role'] } : u));
+    const updatedAdmins = [...prev.admins];
+    if ((role === 'admin' || role === 'superadmin') && !updatedAdmins.includes(staticId)) {
+      updatedAdmins.push(staticId);
+    }
+    return { ...prev, users: updatedUsers, admins: updatedAdmins };
+  });
+
   if (!isDbAvailable()) return;
   try {
     await db.update(users).set({ role }).where(eq(users.staticId, staticId));
@@ -421,6 +464,11 @@ export async function updateUserRoleInDb(staticId: string, role: string) {
 }
 
 export async function updateUserAvatarInDb(staticId: string, avatarUrl?: string) {
+  updateInMemoryStore((prev) => ({
+    ...prev,
+    users: prev.users.map((u) => (u.staticId === staticId ? { ...u, avatarUrl } : u)),
+  }));
+
   if (!isDbAvailable()) return;
   try {
     await db.update(users).set({ avatarUrl: avatarUrl || null }).where(eq(users.staticId, staticId));
@@ -430,6 +478,17 @@ export async function updateUserAvatarInDb(staticId: string, avatarUrl?: string)
 }
 
 export async function createReportInDb(report: ReportType) {
+  updateInMemoryStore((prev) => {
+    const idx = prev.reports.findIndex((r) => r.id === report.id);
+    const updatedReports = [...prev.reports];
+    if (idx >= 0) {
+      updatedReports[idx] = { ...updatedReports[idx], ...report };
+    } else {
+      updatedReports.unshift(report);
+    }
+    return { ...prev, reports: updatedReports };
+  });
+
   if (!isDbAvailable()) return;
   try {
     await db.insert(reports).values({
@@ -463,6 +522,11 @@ export async function createReportInDb(report: ReportType) {
 }
 
 export async function deleteReportFromDb(id: string) {
+  updateInMemoryStore((prev) => ({
+    ...prev,
+    reports: prev.reports.filter((r) => r.id !== id),
+  }));
+
   if (!isDbAvailable()) return;
   try {
     await db.delete(reports).where(eq(reports.id, id));
@@ -472,6 +536,12 @@ export async function deleteReportFromDb(id: string) {
 }
 
 export async function saveArchiveInDb(archive: WeeklyArchiveType) {
+  updateInMemoryStore((prev) => ({
+    ...prev,
+    archives: [archive, ...prev.archives],
+    reports: [],
+  }));
+
   if (!isDbAvailable()) return;
   try {
     await db.insert(archives).values({
@@ -498,6 +568,11 @@ export async function saveArchiveInDb(archive: WeeklyArchiveType) {
 }
 
 export async function deleteArchiveFromDb(id: string) {
+  updateInMemoryStore((prev) => ({
+    ...prev,
+    archives: prev.archives.filter((a) => a.id !== id),
+  }));
+
   if (!isDbAvailable()) return;
   try {
     await db.delete(archives).where(eq(archives.id, id));
@@ -507,6 +582,12 @@ export async function deleteArchiveFromDb(id: string) {
 }
 
 export async function deleteUserFromDb(staticId: string) {
+  updateInMemoryStore((prev) => ({
+    ...prev,
+    users: prev.users.filter((u) => u.staticId !== staticId),
+    admins: prev.admins.filter((a) => a !== staticId),
+  }));
+
   if (!isDbAvailable()) return;
   try {
     await db.delete(users).where(eq(users.staticId, staticId));
