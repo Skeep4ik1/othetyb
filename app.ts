@@ -249,25 +249,67 @@ const getOnlineStaticIds = (): string[] => {
 // Debug endpoint for database inspection
 app.get('/api/debug', async (req, res) => {
   const inMem = getInMemoryStore();
+  const online = getOnlineStaticIds();
+
   let dbStatus = 'unknown';
-  let dbUsersCount = -1;
-  let dbUsersList: any[] = [];
+  let dbData: AppData | null = null;
 
   try {
-    const data = await getDbData();
+    dbData = await getDbData();
     dbStatus = 'connected';
-    dbUsersCount = data.users.length;
-    dbUsersList = data.users.map((u) => ({ staticId: u.staticId, nickname: u.nickname, role: u.role }));
   } catch (err) {
     dbStatus = `error: ${(err as Error).message}`;
   }
 
+  const activeData = dbData || inMem;
+
   res.json({
     timestamp: new Date().toISOString(),
     dbStatus,
-    inMemoryUsersCount: inMem.users.length,
-    dbUsersCount,
-    users: dbUsersList.length > 0 ? dbUsersList : inMem.users.map((u: { staticId: string; nickname: string; role?: string }) => ({ staticId: u.staticId, nickname: u.nickname, role: u.role })),
+    onlineUsersCount: online.length,
+    onlineUsers: online,
+    summary: {
+      usersCount: activeData.users.length,
+      reportsCount: activeData.reports.length,
+      archivesCount: activeData.archives.length,
+      inMemoryUsersCount: inMem.users.length,
+      inMemoryReportsCount: inMem.reports.length,
+      inMemoryArchivesCount: inMem.archives.length,
+    },
+    users: activeData.users.map((u) => ({
+      staticId: u.staticId,
+      nickname: u.nickname,
+      discord: u.discord,
+      role: u.role,
+      rank: u.rank,
+      callsign: u.callsign,
+      hasAvatar: Boolean(u.avatarUrl),
+      createdAt: u.createdAt,
+    })),
+    reports: activeData.reports.map((r) => ({
+      id: r.id,
+      userId: r.userId,
+      nickname: r.nickname,
+      discord: r.discord,
+      date: r.date,
+      status: r.status,
+      checkedReports: r.checkedReports,
+      gatherings: r.gatherings,
+      arrests: r.arrests,
+      events: r.events,
+      proofUrl: r.proofUrl,
+      notes: r.notes,
+    })),
+    archives: activeData.archives.map((a) => ({
+      id: a.id,
+      title: a.title,
+      startDate: a.startDate,
+      endDate: a.endDate,
+      closedBy: a.closedBy,
+      closedAt: a.closedAt,
+      reportsCount: a.reportsCount,
+      totalPoints: a.totalPoints,
+    })),
   });
 });
 
