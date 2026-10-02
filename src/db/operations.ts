@@ -162,7 +162,7 @@ export async function seedInitialAdmin() {
       ? LOCAL_DATA_FILE
       : path.join(process.cwd(), 'server_data.json');
 
-    if (userCount <= 1 && fs.existsSync(jsonFileToUse)) {
+    if (fs.existsSync(jsonFileToUse)) {
       try {
         const rawContent = fs.readFileSync(jsonFileToUse, 'utf-8');
         const jsonAppData = JSON.parse(rawContent);
