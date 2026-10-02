@@ -6,6 +6,7 @@ import {
   isDbAvailable,
   seedInitialAdmin,
   getDbData,
+  getInMemoryStore,
   upsertUserInDb,
   updateUserRoleInDb,
   updateUserAvatarInDb,
@@ -243,6 +244,31 @@ const getOnlineStaticIds = (): string[] => {
   });
   return online;
 };
+
+// Debug endpoint for database inspection
+app.get('/api/debug', async (req, res) => {
+  const inMem = getInMemoryStore();
+  let dbStatus = 'unknown';
+  let dbUsersCount = -1;
+  let dbUsersList: any[] = [];
+
+  try {
+    const data = await getDbData();
+    dbStatus = 'connected';
+    dbUsersCount = data.users.length;
+    dbUsersList = data.users.map((u) => ({ staticId: u.staticId, nickname: u.nickname, role: u.role }));
+  } catch (err) {
+    dbStatus = `error: ${(err as Error).message}`;
+  }
+
+  res.json({
+    timestamp: new Date().toISOString(),
+    dbStatus,
+    inMemoryUsersCount: inMem.users.length,
+    dbUsersCount,
+    users: dbUsersList.length > 0 ? dbUsersList : inMem.users.map((u) => ({ staticId: u.staticId, nickname: u.nickname, role: u.role })),
+  });
+});
 
 // API Routes
 app.get('/api/db', async (req, res) => {
