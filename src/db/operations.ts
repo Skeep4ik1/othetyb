@@ -144,6 +144,10 @@ export const getLocalJsonFallback = (): AppDataType => {
   return inMemoryStore;
 };
 
+export const getInMemoryStore = (): AppDataType => {
+  return inMemoryStore;
+};
+
 export const isDbAvailable = () => {
   return true;
 };

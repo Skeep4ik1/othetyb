@@ -266,7 +266,7 @@ app.get('/api/debug', async (req, res) => {
     dbStatus,
     inMemoryUsersCount: inMem.users.length,
     dbUsersCount,
-    users: dbUsersList.length > 0 ? dbUsersList : inMem.users.map((u) => ({ staticId: u.staticId, nickname: u.nickname, role: u.role })),
+    users: dbUsersList.length > 0 ? dbUsersList : inMem.users.map((u: { staticId: string; nickname: string; role?: string }) => ({ staticId: u.staticId, nickname: u.nickname, role: u.role })),
   });
 });
 
