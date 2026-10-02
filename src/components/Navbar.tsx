@@ -358,7 +358,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                             ★ Зам. начальника
                           </span>
                         ) : (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400 border border-slate-200 dark:border-zinc-800">
+                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-600 dark:text-sky-300 border border-sky-500/50 shadow-xs">
                             Инструктор отдела
                           </span>
                         )}

@@ -88,7 +88,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                       ★ Начальник
                     </span>
                   ) : (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-black text-zinc-400 border border-zinc-800">
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/50">
                       Инструктор отдела
                     </span>
                   )}

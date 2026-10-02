@@ -361,7 +361,7 @@ export const InstructorsTab: React.FC<InstructorsTabProps> = ({
                           <Award className="w-3 h-3 mr-1 text-purple-300" /> ★ Зам. начальника
                         </span>
                       ) : (
-                        <span className="px-2 py-1 rounded-lg text-[10px] font-mono text-zinc-400 bg-black border border-zinc-800">
+                        <span className="px-2 py-1 rounded-lg text-[10px] font-mono font-bold text-sky-400 bg-sky-500/20 border border-sky-500/50 flex items-center shadow-xs">
                           Инструктор
                         </span>
                       )}
