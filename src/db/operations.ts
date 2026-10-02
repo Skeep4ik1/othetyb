@@ -1,6 +1,13 @@
 import { db } from './index.ts';
 import { users, reports, archives, admins } from './schema.ts';
 import { eq, desc } from 'drizzle-orm';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const LOCAL_DATA_FILE = path.join(__dirname, '../../server_data.json');
 
 export interface UserType {
   nickname: string;
@@ -136,6 +143,62 @@ export async function seedInitialAdmin() {
         static_id TEXT PRIMARY KEY
       );
     `);
+
+    // Auto-migrate JSON data into fresh PostgreSQL DB if users table is empty/has <= 1 user
+    const userCountRes = await pool.query('SELECT COUNT(*) FROM users');
+    const userCount = parseInt(userCountRes.rows[0].count, 10);
+
+    if (userCount <= 1 && fs.existsSync(LOCAL_DATA_FILE)) {
+      try {
+        const rawContent = fs.readFileSync(LOCAL_DATA_FILE, 'utf-8');
+        const jsonAppData = JSON.parse(rawContent);
+
+        if (Array.isArray(jsonAppData.users)) {
+          for (const u of jsonAppData.users) {
+            await pool.query(
+              `INSERT INTO users (static_id, nickname, discord, password, role, rank, callsign, avatar_url, created_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+               ON CONFLICT (static_id) DO UPDATE SET
+               nickname = EXCLUDED.nickname, discord = EXCLUDED.discord, role = EXCLUDED.role, rank = EXCLUDED.rank, callsign = EXCLUDED.callsign, avatar_url = EXCLUDED.avatar_url`,
+              [u.staticId, u.nickname, u.discord, u.password || null, u.role || 'instructor', u.rank || null, u.callsign || null, u.avatarUrl || null, u.createdAt ? new Date(u.createdAt) : new Date()]
+            );
+          }
+        }
+
+        if (Array.isArray(jsonAppData.reports)) {
+          for (const r of jsonAppData.reports) {
+            await pool.query(
+              `INSERT INTO reports (id, user_id, nickname, discord, date, checked_reports, gatherings, arrests, events, proof_url, notes, status, reviewed_by, reviewed_at, review_comment)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+               ON CONFLICT (id) DO NOTHING`,
+              [r.id, r.userId, r.nickname, r.discord, r.date, r.checkedReports || r.checked || 0, r.gatherings || r.gathered || 0, r.arrests || 0, r.events || r.trainings || 0, r.proofUrl || null, r.notes || null, r.status || 'pending', r.reviewedBy || null, r.reviewedAt || null, r.reviewComment || null]
+            );
+          }
+        }
+
+        if (Array.isArray(jsonAppData.archives)) {
+          for (const a of jsonAppData.archives) {
+            await pool.query(
+              `INSERT INTO archives (id, title, start_date, end_date, closed_by, closed_at, reports_count, total_points, total_checked_reports, total_gatherings, total_arrests, total_events, archived_reports, instructor_summary)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+               ON CONFLICT (id) DO NOTHING`,
+              [a.id, a.title, a.startDate, a.endDate, a.closedBy, a.closedAt, a.reportsCount, a.totalPoints, a.totalCheckedReports, a.totalGatherings, a.totalArrests, a.totalEvents, JSON.stringify(a.archivedReports || []), JSON.stringify(a.instructorSummary || [])]
+            );
+          }
+        }
+
+        if (Array.isArray(jsonAppData.admins)) {
+          for (const adminId of jsonAppData.admins) {
+            await pool.query(
+              `INSERT INTO admins (static_id) VALUES ($1) ON CONFLICT DO NOTHING`,
+              [String(adminId)]
+            );
+          }
+        }
+      } catch (migrateErr) {
+        console.error('Error auto-migrating JSON data to PostgreSQL:', migrateErr);
+      }
+    }
 
     const existingStanislav = await db.select().from(users).where(eq(users.staticId, '21358'));
     if (existingStanislav.length === 0) {
