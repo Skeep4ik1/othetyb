@@ -541,7 +541,7 @@ ${arch.instructorSummary
                           {/* Instructor Leaderboard */}
                           <div className="space-y-3">
                             <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">
-                              Полный список участников смены ({arch.instructorSummary.length})
+                              Полный список сотрудников за неделю ({arch.instructorSummary.length})
                             </h4>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

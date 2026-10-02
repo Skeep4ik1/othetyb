@@ -214,7 +214,7 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-                Управление составом администраторов, сводка начислений и реестр смен
+                Управление составом администраторов, сводка начислений и реестр еженедельных отчётов
               </p>
             </div>
           </div>
@@ -626,7 +626,7 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
                       Сводка и подсчёт активности
                     </h3>
                     <p className="text-xs text-slate-400">
-                      Итоговые показатели смен, задержаний, сборов и начислений
+                      Итоговые показатели работы, задержаний, сборов и начислений
                     </p>
                   </div>
                 </div>

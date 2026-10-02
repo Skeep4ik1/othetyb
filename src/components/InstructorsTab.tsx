@@ -162,7 +162,7 @@ export const InstructorsTab: React.FC<InstructorsTabProps> = ({
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-                Реестр действующих сотрудников, показатели смен и фонд баллов
+                Реестр действующих сотрудников, показатели работы за неделю и фонд баллов
               </p>
             </div>
           </div>
