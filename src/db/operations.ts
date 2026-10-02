@@ -468,14 +468,16 @@ export async function updateUserRoleInDb(staticId: string, role: string) {
 }
 
 export async function updateUserAvatarInDb(staticId: string, avatarUrl?: string) {
+  const cleanUrl = avatarUrl && avatarUrl.trim() ? avatarUrl.trim() : null;
+
   updateInMemoryStore((prev) => ({
     ...prev,
-    users: prev.users.map((u) => (u.staticId === staticId ? { ...u, avatarUrl } : u)),
+    users: prev.users.map((u) => (u.staticId === staticId ? { ...u, avatarUrl: cleanUrl || undefined } : u)),
   }));
 
   if (!isDbAvailable()) return;
   try {
-    await db.update(users).set({ avatarUrl: avatarUrl || null }).where(eq(users.staticId, staticId));
+    await db.update(users).set({ avatarUrl: cleanUrl }).where(eq(users.staticId, staticId));
   } catch (err) {
     console.error('Error updating user avatar in Cloud SQL:', err);
   }

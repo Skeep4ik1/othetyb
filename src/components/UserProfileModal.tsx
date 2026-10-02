@@ -12,6 +12,7 @@ interface UserProfileModalProps {
   myReportsCount: number;
   onOpenAvatarModal: () => void;
   onNavigateHistory: () => void;
+  onUpdateAvatar?: (url: string) => void;
 }
 
 export const UserProfileModal: React.FC<UserProfileModalProps> = ({
@@ -22,6 +23,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   myReportsCount,
   onOpenAvatarModal,
   onNavigateHistory,
+  onUpdateAvatar,
 }) => {
   if (!isOpen) return null;
 
@@ -125,23 +127,49 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             </div>
 
             {/* Action Controls inside Profile Modal */}
-            <div className="flex gap-2 pt-2">
-              <button
-                onClick={() => {
-                  onClose();
-                  onOpenAvatarModal();
-                }}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white font-bold hover:bg-zinc-800 transition-colors flex items-center justify-center space-x-2 text-xs cursor-pointer"
-              >
-                <Camera className="w-3.5 h-3.5 text-zinc-300" />
-                <span>Сменить фото</span>
-              </button>
+            <div className="flex flex-col gap-2 pt-2">
+              <div className="flex gap-2">
+                <label className="flex-1 py-2.5 px-3 rounded-xl bg-zinc-900 border border-zinc-700 text-white font-bold hover:bg-zinc-800 transition-colors flex items-center justify-center space-x-2 text-xs cursor-pointer">
+                  <Camera className="w-3.5 h-3.5 text-zinc-300" />
+                  <span>Загрузить новое фото</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          alert('Размер файла не должен превышать 5MB');
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          if (onUpdateAvatar) onUpdateAvatar(reader.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                    className="hidden"
+                  />
+                </label>
+                {currentUser.avatarUrl && (
+                  <button
+                    onClick={() => {
+                      if (onUpdateAvatar) onUpdateAvatar('');
+                    }}
+                    className="py-2.5 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-red-400 hover:text-red-300 hover:border-red-900/50 transition-colors text-xs font-bold cursor-pointer"
+                    title="Удалить аватарку"
+                  >
+                    Удалить
+                  </button>
+                )}
+              </div>
               <button
                 onClick={() => {
                   onClose();
                   onNavigateHistory();
                 }}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-white text-black font-bold hover:bg-zinc-200 transition-colors flex items-center justify-center space-x-2 text-xs cursor-pointer"
+                className="w-full py-2.5 px-3 rounded-xl bg-white text-black font-bold hover:bg-zinc-200 transition-colors flex items-center justify-center space-x-2 text-xs cursor-pointer"
               >
                 <History className="w-3.5 h-3.5" />
                 <span>Мои рапорты</span>

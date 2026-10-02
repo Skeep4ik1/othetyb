@@ -192,7 +192,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // In-Memory Rate Limiter
 const rateLimitMap = new Map<string, { count: number; windowStart: number }>();

@@ -558,10 +558,10 @@ function MainApp() {
         isAdmin={isAdmin}
         myReportsCount={myReportsCount}
         onOpenAvatarModal={() => {
-          // Open history tab or avatar edit
           setActiveTab('history');
         }}
         onNavigateHistory={() => setActiveTab('history')}
+        onUpdateAvatar={(url) => handleUpdateUserAvatar(currentUser.staticId, url)}
       />
 
       {/* Toast Notifications */}
