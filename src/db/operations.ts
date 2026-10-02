@@ -101,62 +101,71 @@ export async function seedInitialAdmin() {
     const { createPool } = await import('./index.ts');
     const pool = createPool();
 
-    // Ensure database tables exist
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        static_id TEXT PRIMARY KEY,
-        nickname TEXT NOT NULL,
-        discord TEXT NOT NULL,
-        password TEXT,
-        role TEXT NOT NULL DEFAULT 'instructor',
-        rank TEXT,
-        callsign TEXT,
-        avatar_url TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-      CREATE TABLE IF NOT EXISTS reports (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        nickname TEXT NOT NULL,
-        discord TEXT NOT NULL,
-        date TEXT NOT NULL,
-        checked_reports INTEGER NOT NULL DEFAULT 0,
-        gatherings INTEGER NOT NULL DEFAULT 0,
-        arrests INTEGER NOT NULL DEFAULT 0,
-        events INTEGER NOT NULL DEFAULT 0,
-        proof_url TEXT,
-        notes TEXT,
-        status TEXT NOT NULL DEFAULT 'pending',
-        reviewed_by TEXT,
-        reviewed_at TEXT,
-        review_comment TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-      CREATE TABLE IF NOT EXISTS archives (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        start_date TEXT NOT NULL,
-        end_date TEXT NOT NULL,
-        closed_by TEXT NOT NULL,
-        closed_at TEXT NOT NULL,
-        reports_count INTEGER NOT NULL DEFAULT 0,
-        total_points INTEGER NOT NULL DEFAULT 0,
-        total_checked_reports INTEGER NOT NULL DEFAULT 0,
-        total_gatherings INTEGER NOT NULL DEFAULT 0,
-        total_arrests INTEGER NOT NULL DEFAULT 0,
-        total_events INTEGER NOT NULL DEFAULT 0,
-        archived_reports JSONB NOT NULL,
-        instructor_summary JSONB NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-      CREATE TABLE IF NOT EXISTS admins (
-        static_id TEXT PRIMARY KEY
-      );
-    `);
+    // Ensure database tables exist (ignore permission errors if user lacks DDL permissions or tables exist from backup)
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          static_id TEXT PRIMARY KEY,
+          nickname TEXT NOT NULL,
+          discord TEXT NOT NULL,
+          password TEXT,
+          role TEXT NOT NULL DEFAULT 'instructor',
+          rank TEXT,
+          callsign TEXT,
+          avatar_url TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS reports (
+          id TEXT PRIMARY KEY,
+          user_id TEXT NOT NULL,
+          nickname TEXT NOT NULL,
+          discord TEXT NOT NULL,
+          date TEXT NOT NULL,
+          checked_reports INTEGER NOT NULL DEFAULT 0,
+          gatherings INTEGER NOT NULL DEFAULT 0,
+          arrests INTEGER NOT NULL DEFAULT 0,
+          events INTEGER NOT NULL DEFAULT 0,
+          proof_url TEXT,
+          notes TEXT,
+          status TEXT NOT NULL DEFAULT 'pending',
+          reviewed_by TEXT,
+          reviewed_at TEXT,
+          review_comment TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS archives (
+          id TEXT PRIMARY KEY,
+          title TEXT NOT NULL,
+          start_date TEXT NOT NULL,
+          end_date TEXT NOT NULL,
+          closed_by TEXT NOT NULL,
+          closed_at TEXT NOT NULL,
+          reports_count INTEGER NOT NULL DEFAULT 0,
+          total_points INTEGER NOT NULL DEFAULT 0,
+          total_checked_reports INTEGER NOT NULL DEFAULT 0,
+          total_gatherings INTEGER NOT NULL DEFAULT 0,
+          total_arrests INTEGER NOT NULL DEFAULT 0,
+          total_events INTEGER NOT NULL DEFAULT 0,
+          archived_reports JSONB NOT NULL,
+          instructor_summary JSONB NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS admins (
+          static_id TEXT PRIMARY KEY
+        );
+      `);
+    } catch (tableErr) {
+      console.warn('Notice: CREATE TABLE skipped (tables likely already exist or DDL permission restricted):', (tableErr as Error).message);
+    }
 
     // Auto-migrate JSON data into fresh PostgreSQL DB ONLY if users table is empty
-    const userCountRes = await pool.query('SELECT COUNT(*) FROM users');
-    const userCount = parseInt(userCountRes.rows[0].count, 10);
+    let userCount = -1;
+    try {
+      const userCountRes = await pool.query('SELECT COUNT(*) FROM users');
+      userCount = parseInt(userCountRes.rows[0].count, 10);
+    } catch (countErr) {
+      console.warn('Notice: Could not count users table:', (countErr as Error).message);
+    }
 
     const findServerDataJson = () => {
       const candidates = [
@@ -225,22 +234,26 @@ export async function seedInitialAdmin() {
       }
     }
 
-    const existingStanislav = await db.select().from(users).where(eq(users.staticId, '21358'));
-    if (existingStanislav.length === 0) {
-      await db.insert(users).values({
-        staticId: '21358',
-        nickname: 'Станислав Яров',
-        discord: 'nensikq',
-        password: 'admin',
-        role: 'superadmin',
-      }).onConflictDoNothing();
-    }
-    const existingAdmin = await db.select().from(admins).where(eq(admins.staticId, '21358'));
-    if (existingAdmin.length === 0) {
-      await db.insert(admins).values({ staticId: '21358' }).onConflictDoNothing();
+    try {
+      const existingStanislav = await db.select().from(users).where(eq(users.staticId, '21358'));
+      if (existingStanislav.length === 0) {
+        await db.insert(users).values({
+          staticId: '21358',
+          nickname: 'Станислав Яров',
+          discord: 'nensikq',
+          password: 'admin',
+          role: 'superadmin',
+        }).onConflictDoNothing();
+      }
+      const existingAdmin = await db.select().from(admins).where(eq(admins.staticId, '21358'));
+      if (existingAdmin.length === 0) {
+        await db.insert(admins).values({ staticId: '21358' }).onConflictDoNothing();
+      }
+    } catch (adminSeedErr) {
+      console.warn('Notice: Superadmin seed check skipped:', (adminSeedErr as Error).message);
     }
   } catch (err) {
-    console.error('Error seeding initial admin or creating tables in PostgreSQL:', err);
+    console.error('Error during seedInitialAdmin:', err);
   }
 }
 
