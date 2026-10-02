@@ -268,7 +268,7 @@ export const InstructorsTab: React.FC<InstructorsTabProps> = ({
                     ? 'border-amber-500/50 bg-gradient-to-b from-amber-950/20 to-zinc-900'
                     : inst.isDeputyChief
                     ? 'border-purple-500/50 bg-gradient-to-b from-purple-950/20 to-zinc-900'
-                    : 'border-zinc-800 hover:border-zinc-700'
+                    : 'border-sky-500/40 bg-gradient-to-b from-sky-950/20 to-zinc-900'
                 }`}
               >
                 <div>
@@ -283,7 +283,7 @@ export const InstructorsTab: React.FC<InstructorsTabProps> = ({
                             ? 'bg-amber-500 text-black border border-amber-300'
                             : inst.isDeputyChief
                             ? 'bg-purple-600 text-white border border-purple-400'
-                            : 'bg-black text-zinc-300 border border-zinc-800'
+                            : 'bg-sky-600 text-white border border-sky-400'
                         }`}>
                           {inst.avatarUrl ? (
                             <img 
