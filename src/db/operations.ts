@@ -87,12 +87,7 @@ export interface AppDataType {
 }
 
 export const isDbAvailable = () => {
-  return Boolean(
-    process.env.DATABASE_URL ||
-    process.env.POSTGRES_URL ||
-    process.env.POSTGRES_HOST ||
-    process.env.SQL_HOST
-  );
+  return true;
 };
 
 export async function seedInitialAdmin() {
