@@ -158,11 +158,23 @@ export async function seedInitialAdmin() {
     const userCountRes = await pool.query('SELECT COUNT(*) FROM users');
     const userCount = parseInt(userCountRes.rows[0].count, 10);
 
-    const jsonFileToUse = fs.existsSync(LOCAL_DATA_FILE)
-      ? LOCAL_DATA_FILE
-      : path.join(process.cwd(), 'server_data.json');
+    const findServerDataJson = () => {
+      const candidates = [
+        path.join(process.cwd(), 'server_data.json'),
+        path.join(dbDirname, '../../server_data.json'),
+        path.join(dbDirname, '../server_data.json'),
+        path.join(dbDirname, 'server_data.json'),
+        '/app/server_data.json',
+      ];
+      for (const p of candidates) {
+        if (fs.existsSync(p)) return p;
+      }
+      return null;
+    };
 
-    if (fs.existsSync(jsonFileToUse)) {
+    const jsonFileToUse = findServerDataJson();
+
+    if (jsonFileToUse) {
       try {
         const rawContent = fs.readFileSync(jsonFileToUse, 'utf-8');
         const jsonAppData = JSON.parse(rawContent);
@@ -236,6 +248,13 @@ export async function seedInitialAdmin() {
 export async function getDbData(): Promise<AppDataType> {
   if (!isDbAvailable()) {
     throw new Error('Database not configured');
+  }
+
+  // Ensure tables and JSON data seeding are complete before reading DB
+  try {
+    await seedInitialAdmin();
+  } catch (seedError) {
+    console.error('Error during seedInitialAdmin in getDbData:', seedError);
   }
 
   try {
