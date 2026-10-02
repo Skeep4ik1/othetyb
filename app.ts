@@ -278,17 +278,6 @@ app.post('/api/users/role', async (req, res) => {
     return res.status(400).json({ error: 'staticId and role are required' });
   }
 
-  if (isDbAvailable()) {
-    try {
-      await updateUserRoleInDb(String(staticId), role);
-      const freshData = await getDbData();
-      const user = freshData.users.find((u) => u.staticId === String(staticId));
-      return res.json({ success: true, user, users: freshData.users, admins: freshData.admins });
-    } catch (err) {
-      console.error('Error updating role in Cloud SQL:', err);
-    }
-  }
-
   const data = readData();
   const user = data.users.find((u) => u.staticId === String(staticId));
 
@@ -300,6 +289,20 @@ app.post('/api/users/role', async (req, res) => {
       }
     }
     writeData(data);
+  }
+
+  if (isDbAvailable()) {
+    try {
+      await updateUserRoleInDb(String(staticId), role);
+      const freshData = await getDbData();
+      const freshUser = freshData.users.find((u) => u.staticId === String(staticId));
+      return res.json({ success: true, user: freshUser || user, users: freshData.users, admins: freshData.admins });
+    } catch (err) {
+      console.error('Error updating role in Cloud SQL:', err);
+    }
+  }
+
+  if (user) {
     return res.json({ success: true, user, users: data.users, admins: data.admins });
   }
 
@@ -312,6 +315,16 @@ app.post('/api/users', async (req, res) => {
     return res.status(400).json({ error: 'User and staticId are required' });
   }
 
+  const data = readData();
+  const existingIndex = data.users.findIndex((u) => u.staticId === user.staticId);
+
+  if (existingIndex >= 0) {
+    data.users[existingIndex] = { ...data.users[existingIndex], ...user };
+  } else {
+    data.users.push(user);
+  }
+  writeData(data);
+
   if (isDbAvailable()) {
     try {
       await upsertUserInDb(user);
@@ -322,16 +335,6 @@ app.post('/api/users', async (req, res) => {
     }
   }
 
-  const data = readData();
-  const existingIndex = data.users.findIndex((u) => u.staticId === user.staticId);
-
-  if (existingIndex >= 0) {
-    data.users[existingIndex] = { ...data.users[existingIndex], ...user };
-  } else {
-    data.users.push(user);
-  }
-
-  writeData(data);
   res.json({ success: true, user, users: data.users });
 });
 

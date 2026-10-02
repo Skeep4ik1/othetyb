@@ -157,13 +157,17 @@ function MainApp() {
   };
 
   const handleRegister = async (newUser: User) => {
-    const updatedUsers = [...users, newUser];
+    const updatedUsers = [...users.filter((u) => u.staticId !== newUser.staticId), newUser];
     setUsers(updatedUsers);
     localStorage.setItem('depV_users', JSON.stringify(updatedUsers));
     handleLogin(newUser);
 
     // Sync to Server
-    await apiSaveUser(newUser);
+    const res = await apiSaveUser(newUser);
+    if (res && res.users && res.users.length > 0) {
+      setUsers(res.users);
+      localStorage.setItem('depV_users', JSON.stringify(res.users));
+    }
     showToast(`Регистрация успешна! Добро пожаловать, ${newUser.nickname}!`, 'success');
   };
 
