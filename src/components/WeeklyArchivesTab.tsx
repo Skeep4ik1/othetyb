@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Archive, 
@@ -16,10 +16,14 @@ import {
   Trash2, 
   ExternalLink,
   ShieldCheck,
-  Search
+  Search,
+  Trophy,
+  Crown,
+  Medal,
+  Sparkles
 } from 'lucide-react';
 import { WeeklyArchive, Report, User } from '../types';
-import { calculatePoints, exportReportsToCSV } from '../utils/storage';
+import { calculatePoints, exportReportsToCSV, parseReportDate } from '../utils/storage';
 
 interface WeeklyArchivesTabProps {
   archives: WeeklyArchive[];
@@ -43,17 +47,63 @@ export const WeeklyArchivesTab: React.FC<WeeklyArchivesTabProps> = ({
     archives.length > 0 ? archives[0].id : null
   );
   const [searchQuery, setSearchQuery] = useState('');
+  const [period, setPeriod] = useState<'all' | 'today' | '7d' | '30d'>('all');
   const [activeSubTab, setActiveSubTab] = useState<'summary' | 'reports'>('summary');
 
-  const filteredArchives = archives.filter((a) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      a.title.toLowerCase().includes(q) ||
-      a.closedBy.toLowerCase().includes(q) ||
-      a.instructorSummary.some((i) => i.nickname.toLowerCase().includes(q) || i.staticId.includes(q))
-    );
-  });
+  const filteredArchives = useMemo(() => {
+    const now = Date.now();
+    return archives.filter((a) => {
+      if (period === 'today') {
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        if (parseReportDate(a.closedAt || a.endDate) < startOfToday.getTime()) return false;
+      } else if (period === '7d') {
+        const cutoff = now - 7 * 24 * 60 * 60 * 1000;
+        if (parseReportDate(a.closedAt || a.endDate) < cutoff) return false;
+      } else if (period === '30d') {
+        const cutoff = now - 30 * 24 * 60 * 60 * 1000;
+        if (parseReportDate(a.closedAt || a.endDate) < cutoff) return false;
+      }
+
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        return (
+          a.title.toLowerCase().includes(q) ||
+          a.closedBy.toLowerCase().includes(q) ||
+          a.instructorSummary.some((i) => i.nickname.toLowerCase().includes(q) || i.staticId.includes(q))
+        );
+      }
+      return true;
+    });
+  }, [archives, period, searchQuery]);
+
+  // Calculate aggregated Top 2 Best Employees for selected period across archives
+  const periodTop2Instructors = useMemo(() => {
+    const map = new Map<string, {
+      nickname: string;
+      staticId: string;
+      discord: string;
+      points: number;
+      reportsCount: number;
+    }>();
+
+    filteredArchives.forEach((arch) => {
+      arch.instructorSummary.forEach((ins) => {
+        const prev = map.get(ins.staticId) || {
+          nickname: ins.nickname,
+          staticId: ins.staticId,
+          discord: ins.discord,
+          points: 0,
+          reportsCount: 0,
+        };
+        prev.points += ins.points;
+        prev.reportsCount += ins.reportsCount;
+        map.set(ins.staticId, prev);
+      });
+    });
+
+    return Array.from(map.values()).sort((a, b) => b.points - a.points).slice(0, 2);
+  }, [filteredArchives]);
 
   const handleCopySummary = (arch: WeeklyArchive) => {
     const text = `[ЕЖЕНЕДЕЛЬНЫЙ ОТЧЁТ ОТДЕЛА «В»]
@@ -85,7 +135,7 @@ ${arch.instructorSummary
     <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
       {/* Top Banner */}
       <div className="bg-[#121212] border border-zinc-800 rounded-3xl p-5 sm:p-6 backdrop-blur-xl shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center space-x-3.5">
             <div className="w-12 h-12 rounded-2xl bg-white text-black flex items-center justify-center font-black shadow-lg shrink-0">
               <Archive className="w-6 h-6 stroke-black" />
@@ -105,7 +155,29 @@ ${arch.instructorSummary
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {/* Period Selector Pills */}
+            <div className="flex items-center space-x-1 p-1 bg-black border border-zinc-800 rounded-2xl text-xs font-mono shadow-inner">
+              {[
+                { id: 'all', label: 'Всё время' },
+                { id: 'today', label: 'Сегодня' },
+                { id: '7d', label: '7 дней' },
+                { id: '30d', label: '30 дней' },
+              ].map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setPeriod(p.id as typeof period)}
+                  className={`px-3 py-1.5 rounded-xl font-extrabold transition-all cursor-pointer ${
+                    period === p.id
+                      ? 'bg-zinc-800 text-red-400 shadow-md border border-zinc-700/60'
+                      : 'text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
               <input
@@ -113,12 +185,96 @@ ${arch.instructorSummary
                 placeholder="Поиск по архиву..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3.5 py-2 rounded-2xl bg-black border border-zinc-800 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500 font-mono w-48 sm:w-60"
+                className="pl-9 pr-3.5 py-2 rounded-2xl bg-black border border-zinc-800 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-500 font-mono w-44 sm:w-52"
               />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Top 2 Best Employees Banner across selected period */}
+      {periodTop2Instructors.length > 0 && (
+        <div className="bg-[#121212] border border-amber-500/30 rounded-3xl p-5 sm:p-6 shadow-xl space-y-4">
+          <div className="flex items-center space-x-3">
+            <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+              <Trophy className="w-6 h-6 stroke-amber-400" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-base sm:text-lg font-black text-white font-['Unbounded']">
+                  🏆 Два лучших сотрудника недели
+                </h3>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  ТОП-2 НАГРАДЫ
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400 font-sans mt-0.5">
+                Лидеры отдела с наибольшим количеством набранных баллов за период
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {periodTop2Instructors[0] && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-950/40 via-amber-900/20 to-black border border-amber-500/50 flex items-center justify-between font-mono shadow-md relative overflow-hidden">
+                <div className="flex items-center space-x-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500 text-black font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
+                    🥇
+                  </div>
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-amber-300 font-mono tracking-wider px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 inline-block mb-1">
+                      1-Е МЕСТО • ЛУЧШИЙ СОТРУДНИК
+                    </span>
+                    <div className="font-extrabold text-white text-sm font-sans">
+                      {periodTop2Instructors[0].nickname}
+                    </div>
+                    <div className="text-[11px] text-zinc-400">
+                      ID: #{periodTop2Instructors[0].staticId} • DS: {periodTop2Instructors[0].discord}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-black text-amber-300">
+                    +{periodTop2Instructors[0].points} б.
+                  </div>
+                  <div className="text-[10px] text-zinc-400">
+                    {periodTop2Instructors[0].reportsCount} рапортов
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {periodTop2Instructors[1] && (
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-900/60 via-slate-800/30 to-black border border-slate-400/50 flex items-center justify-between font-mono shadow-md relative overflow-hidden">
+                <div className="flex items-center space-x-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-300 text-black font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
+                    🥈
+                  </div>
+                  <div>
+                    <span className="text-[9px] uppercase font-bold text-slate-300 font-mono tracking-wider px-2 py-0.5 rounded bg-slate-500/20 border border-slate-400/40 inline-block mb-1">
+                      2-Е МЕСТО • ЛУЧШИЙ СОТРУДНИК
+                    </span>
+                    <div className="font-extrabold text-white text-sm font-sans">
+                      {periodTop2Instructors[1].nickname}
+                    </div>
+                    <div className="text-[11px] text-zinc-400">
+                      ID: #{periodTop2Instructors[1].staticId} • DS: {periodTop2Instructors[1].discord}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-black text-slate-200">
+                    +{periodTop2Instructors[1].points} б.
+                  </div>
+                  <div className="text-[10px] text-zinc-400">
+                    {periodTop2Instructors[1].reportsCount} рапортов
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Main List of Archives */}
       {filteredArchives.length === 0 ? (
@@ -318,10 +474,74 @@ ${arch.instructorSummary
                             </div>
                           </div>
 
+                          {/* Two Best Employees of this Week Highlight */}
+                          {arch.instructorSummary.length > 0 && (
+                            <div className="space-y-3 p-4 rounded-2xl bg-[#0e1424] border border-amber-500/30">
+                              <div className="flex items-center space-x-2">
+                                <Trophy className="w-4 h-4 text-amber-400" />
+                                <span className="text-xs font-bold text-amber-300 uppercase tracking-wider font-mono">
+                                  Два лучших сотрудника этой недели
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {arch.instructorSummary[0] && (
+                                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-950/40 via-amber-900/20 to-black border border-amber-500/50 flex items-center justify-between font-mono">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="text-2xl">🥇</div>
+                                      <div>
+                                        <div className="text-[10px] text-amber-300 font-bold uppercase">1-е место (Лучший)</div>
+                                        <div className="font-extrabold text-white text-sm font-sans">
+                                          {arch.instructorSummary[0].nickname}
+                                        </div>
+                                        <div className="text-[10px] text-zinc-400">
+                                          ID: #{arch.instructorSummary[0].staticId} • DS: {arch.instructorSummary[0].discord}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="text-sm font-black text-amber-300">
+                                        +{arch.instructorSummary[0].points} б.
+                                      </div>
+                                      <div className="text-[10px] text-zinc-400">
+                                        {arch.instructorSummary[0].reportsCount} рапортов
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {arch.instructorSummary[1] && (
+                                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-slate-900/60 via-slate-800/20 to-black border border-slate-400/50 flex items-center justify-between font-mono">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="text-2xl">🥈</div>
+                                      <div>
+                                        <div className="text-[10px] text-slate-300 font-bold uppercase">2-е место (Призёр)</div>
+                                        <div className="font-extrabold text-white text-sm font-sans">
+                                          {arch.instructorSummary[1].nickname}
+                                        </div>
+                                        <div className="text-[10px] text-zinc-400">
+                                          ID: #{arch.instructorSummary[1].staticId} • DS: {arch.instructorSummary[1].discord}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <div className="text-sm font-black text-slate-200">
+                                        +{arch.instructorSummary[1].points} б.
+                                      </div>
+                                      <div className="text-[10px] text-zinc-400">
+                                        {arch.instructorSummary[1].reportsCount} рапортов
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           {/* Instructor Leaderboard */}
                           <div className="space-y-3">
                             <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-wider font-mono">
-                              Рейтинг инструкторов за неделю ({arch.instructorSummary.length})
+                              Полный список участников смены ({arch.instructorSummary.length})
                             </h4>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
