@@ -20,7 +20,7 @@ export const createPool = () => {
         connectionString,
         ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
         max: 10,
-        connectionTimeoutMillis: 15000,
+        connectionTimeoutMillis: 2000,
       });
     } else {
       global._postgresPool = new Pool({
@@ -31,7 +31,7 @@ export const createPool = () => {
         database: process.env.SQL_DB_NAME || process.env.POSTGRES_DB || 'users',
         ssl: process.env.SQL_SSL === 'true' ? { rejectUnauthorized: false } : false,
         max: 10,
-        connectionTimeoutMillis: 15000,
+        connectionTimeoutMillis: 2000,
       });
     }
 
