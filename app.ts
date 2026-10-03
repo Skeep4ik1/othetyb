@@ -146,9 +146,15 @@ function readData(): AppData {
       const rawAdmins: string[] = Array.isArray(parsed.admins) ? parsed.admins : DEFAULT_DATA.admins;
       const admins = rawAdmins.includes('21358') ? rawAdmins : ['21358', ...rawAdmins];
 
+      const rawReports: Report[] = Array.isArray(parsed.reports) ? parsed.reports : DEFAULT_DATA.reports;
+      const uniqueReportsMap = new Map<string, Report>();
+      rawReports.forEach((r) => {
+        if (r && r.id) uniqueReportsMap.set(r.id, r);
+      });
+
       return {
         users,
-        reports: Array.isArray(parsed.reports) ? parsed.reports : DEFAULT_DATA.reports,
+        reports: Array.from(uniqueReportsMap.values()),
         admins,
         archives: Array.isArray(parsed.archives) ? parsed.archives : DEFAULT_DATA.archives,
       };
@@ -482,7 +488,17 @@ app.post('/api/reports', async (req, res) => {
   }
 
   const data = readData();
-  data.reports.unshift(report);
+  const existingIdx = data.reports.findIndex((r) => r.id === report.id);
+  if (existingIdx >= 0) {
+    data.reports[existingIdx] = { ...data.reports[existingIdx], ...report };
+  } else {
+    data.reports.unshift(report);
+  }
+  
+  const map = new Map<string, Report>();
+  data.reports.forEach((r) => { if (r && r.id) map.set(r.id, r); });
+  data.reports = Array.from(map.values());
+
   writeData(data);
   res.json({ success: true, report, reports: data.reports });
 });

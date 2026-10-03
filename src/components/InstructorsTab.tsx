@@ -57,12 +57,16 @@ export const InstructorsTab: React.FC<InstructorsTabProps> = ({
 
   // Combine user info with computed stats from reports
   const instructorsWithStats = useMemo(() => {
+    const uniqueRepMap = new Map<string, Report>();
+    (reports || []).forEach((r) => { if (r && r.id) uniqueRepMap.set(r.id, r); });
+    const uniqueReports = Array.from(uniqueRepMap.values());
+
     const userMap = new Map<string, User>();
     
     users.forEach((u) => userMap.set(u.staticId, u));
 
     // Ensure users found in reports are also mapped if not already
-    reports.forEach((r) => {
+    uniqueReports.forEach((r) => {
       if (!userMap.has(r.userId)) {
         userMap.set(r.userId, {
           nickname: r.nickname,
@@ -75,7 +79,7 @@ export const InstructorsTab: React.FC<InstructorsTabProps> = ({
     });
 
     const list = Array.from(userMap.values()).map((user) => {
-      const userReports = reports.filter((r) => r.userId === user.staticId);
+      const userReports = uniqueReports.filter((r) => r.userId === user.staticId);
       const totalReports = userReports.length;
       const totalPoints = userReports.reduce((sum, r) => sum + calculatePoints(r), 0);
       const checkedReports = userReports.reduce((sum, r) => sum + (r.checkedReports ?? r.checked ?? 0), 0);

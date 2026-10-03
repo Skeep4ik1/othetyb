@@ -151,15 +151,21 @@ export const loadStoredData = () => {
       try {
         const parsed: any[] = JSON.parse(rawReports);
         if (parsed.length > 0) {
-          reports = parsed.map((r) => ({
-            ...r,
-            nickname: r.nickname === 'Stanislav Yarov' ? 'Станислав Яров' : r.nickname,
-            checkedReports: r.checkedReports ?? r.checked ?? 0,
-            gatherings: r.gatherings ?? r.gathered ?? 0,
-            arrests: r.arrests ?? 0,
-            events: r.events ?? r.trainings ?? 0,
-            status: 'approved',
-          }));
+          const repMap = new Map<string, Report>();
+          parsed.forEach((r) => {
+            if (r && r.id) {
+              repMap.set(r.id, {
+                ...r,
+                nickname: r.nickname === 'Stanislav Yarov' ? 'Станислав Яров' : r.nickname,
+                checkedReports: r.checkedReports ?? r.checked ?? 0,
+                gatherings: r.gatherings ?? r.gathered ?? 0,
+                arrests: r.arrests ?? 0,
+                events: r.events ?? r.trainings ?? 0,
+                status: 'approved',
+              });
+            }
+          });
+          reports = Array.from(repMap.values());
         } else {
           reports = INITIAL_REPORTS;
         }

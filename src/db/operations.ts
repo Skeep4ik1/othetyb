@@ -102,6 +102,14 @@ let inMemoryStore: AppDataType = {
   archives: [],
 };
 
+const deduplicateReports = (reps: ReportType[]): ReportType[] => {
+  const map = new Map<string, ReportType>();
+  for (const r of reps) {
+    if (r && r.id) map.set(r.id, r);
+  }
+  return Array.from(map.values());
+};
+
 const initInMemoryStore = () => {
   const candidates = [
     path.join(process.cwd(), 'server_data.json'),
@@ -116,7 +124,7 @@ const initInMemoryStore = () => {
         const parsed = JSON.parse(fs.readFileSync(p, 'utf-8'));
         inMemoryStore = {
           users: Array.isArray(parsed.users) ? parsed.users : inMemoryStore.users,
-          reports: Array.isArray(parsed.reports) ? parsed.reports : [],
+          reports: Array.isArray(parsed.reports) ? deduplicateReports(parsed.reports) : [],
           admins: Array.isArray(parsed.admins) ? parsed.admins : ['21358'],
           archives: Array.isArray(parsed.archives) ? parsed.archives : [],
         };
@@ -131,6 +139,9 @@ initInMemoryStore();
 
 export const updateInMemoryStore = (updater: (prev: AppDataType) => AppDataType) => {
   inMemoryStore = updater(inMemoryStore);
+  if (inMemoryStore.reports) {
+    inMemoryStore.reports = deduplicateReports(inMemoryStore.reports);
+  }
   try {
     const targetFile = path.join(process.cwd(), 'server_data.json');
     fs.writeFileSync(targetFile, JSON.stringify(inMemoryStore, null, 2), 'utf-8');
@@ -357,23 +368,29 @@ export async function getDbData(): Promise<AppDataType> {
       });
     }
 
-    const mappedReports: ReportType[] = dbReports.map((r) => ({
-      id: r.id,
-      userId: r.userId,
-      nickname: r.nickname,
-      discord: r.discord,
-      date: r.date,
-      checkedReports: r.checkedReports,
-      gatherings: r.gatherings,
-      arrests: r.arrests,
-      events: r.events,
-      proofUrl: r.proofUrl || undefined,
-      notes: r.notes || undefined,
-      status: (r.status as ReportType['status']) || 'pending',
-      reviewedBy: r.reviewedBy || undefined,
-      reviewedAt: r.reviewedAt || undefined,
-      reviewComment: r.reviewComment || undefined,
-    }));
+    const uniqueDbReportsMap = new Map<string, ReportType>();
+    dbReports.forEach((r) => {
+      if (r && r.id && !uniqueDbReportsMap.has(r.id)) {
+        uniqueDbReportsMap.set(r.id, {
+          id: r.id,
+          userId: r.userId,
+          nickname: r.nickname,
+          discord: r.discord,
+          date: r.date,
+          checkedReports: r.checkedReports,
+          gatherings: r.gatherings,
+          arrests: r.arrests,
+          events: r.events,
+          proofUrl: r.proofUrl || undefined,
+          notes: r.notes || undefined,
+          status: (r.status as ReportType['status']) || 'pending',
+          reviewedBy: r.reviewedBy || undefined,
+          reviewedAt: r.reviewedAt || undefined,
+          reviewComment: r.reviewComment || undefined,
+        });
+      }
+    });
+    const mappedReports = Array.from(uniqueDbReportsMap.values());
 
     const mappedArchives: WeeklyArchiveType[] = dbArchives.map((a) => ({
       id: a.id,

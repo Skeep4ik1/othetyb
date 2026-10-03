@@ -65,9 +65,15 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
   const [customArchiveTitle, setCustomArchiveTitle] = useState('');
   const [summaryPeriod, setSummaryPeriod] = useState<'all' | 'today' | '7d' | '30d'>('all');
 
+  const uniqueReports = useMemo(() => {
+    const map = new Map<string, Report>();
+    (reports || []).forEach((r) => { if (r && r.id) map.set(r.id, r); });
+    return Array.from(map.values());
+  }, [reports]);
+
   const filteredReports = useMemo(() => {
     const now = Date.now();
-    return reports
+    return uniqueReports
       .filter((r) => {
         if (summaryPeriod === 'today') {
           const startOfToday = new Date();
@@ -89,22 +95,22 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
         return true;
       })
       .sort((a, b) => parseReportDate(b.date) - parseReportDate(a.date));
-  }, [reports, searchQuery, summaryPeriod]);
+  }, [uniqueReports, searchQuery, summaryPeriod]);
 
   const summaryData = useMemo(() => {
-    let targetReports = reports;
+    let targetReports = uniqueReports;
     const now = Date.now();
 
     if (summaryPeriod === 'today') {
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
-      targetReports = reports.filter((r) => parseReportDate(r.date) >= startOfToday.getTime());
+      targetReports = uniqueReports.filter((r) => parseReportDate(r.date) >= startOfToday.getTime());
     } else if (summaryPeriod === '7d') {
       const cutoff = now - 7 * 24 * 60 * 60 * 1000;
-      targetReports = reports.filter((r) => parseReportDate(r.date) >= cutoff);
+      targetReports = uniqueReports.filter((r) => parseReportDate(r.date) >= cutoff);
     } else if (summaryPeriod === '30d') {
       const cutoff = now - 30 * 24 * 60 * 60 * 1000;
-      targetReports = reports.filter((r) => parseReportDate(r.date) >= cutoff);
+      targetReports = uniqueReports.filter((r) => parseReportDate(r.date) >= cutoff);
     }
 
     const totalReportsCount = targetReports.length;

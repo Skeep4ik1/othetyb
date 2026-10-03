@@ -25,23 +25,27 @@ interface AnalyticsTabProps {
 
 export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ reports, showToast }) => {
   const stats = useMemo(() => {
-    const totalCheckedReports = reports.reduce(
+    const uniqueRepMap = new Map<string, Report>();
+    (reports || []).forEach((r) => { if (r && r.id) uniqueRepMap.set(r.id, r); });
+    const uniqueReports = Array.from(uniqueRepMap.values());
+
+    const totalCheckedReports = uniqueReports.reduce(
       (sum, r) => sum + (r.checkedReports ?? r.checked ?? 0),
       0
     );
-    const totalGatherings = reports.reduce(
+    const totalGatherings = uniqueReports.reduce(
       (sum, r) => sum + (r.gatherings ?? r.gathered ?? 0),
       0
     );
-    const totalArrests = reports.reduce(
+    const totalArrests = uniqueReports.reduce(
       (sum, r) => sum + (r.arrests ?? 0),
       0
     );
-    const totalEvents = reports.reduce(
+    const totalEvents = uniqueReports.reduce(
       (sum, r) => sum + (r.events ?? r.trainings ?? 0),
       0
     );
-    const totalPoints = reports.reduce((sum, r) => sum + calculatePoints(r), 0);
+    const totalPoints = uniqueReports.reduce((sum, r) => sum + calculatePoints(r), 0);
 
     // Leaderboard by instructor
     const instructorMap = new Map<
@@ -59,7 +63,7 @@ export const AnalyticsTab: React.FC<AnalyticsTabProps> = ({ reports, showToast }
       }
     >();
 
-    reports.forEach((r) => {
+    uniqueReports.forEach((r) => {
       const existing = instructorMap.get(r.userId) || {
         nickname: r.nickname,
         staticId: r.userId,

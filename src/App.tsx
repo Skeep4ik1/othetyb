@@ -119,13 +119,20 @@ function MainApp() {
         }
 
         if (serverDb.reports) {
-          if (serverDb.reports.length > 0) {
-            setReports(serverDb.reports);
-            localStorage.setItem('depV_reports', JSON.stringify(serverDb.reports));
+          const uniqueRepMap = new Map<string, Report>();
+          serverDb.reports.forEach((r) => { if (r && r.id) uniqueRepMap.set(r.id, r); });
+          const uniqueReports = Array.from(uniqueRepMap.values());
+
+          if (uniqueReports.length > 0) {
+            setReports(uniqueReports);
+            localStorage.setItem('depV_reports', JSON.stringify(uniqueReports));
           } else if (stored.reports && stored.reports.length > 0) {
-            setReports(stored.reports);
-            localStorage.setItem('depV_reports', JSON.stringify(stored.reports));
-            for (const r of stored.reports) {
+            const localMap = new Map<string, Report>();
+            stored.reports.forEach((r) => { if (r && r.id) localMap.set(r.id, r); });
+            const uniqueLocal = Array.from(localMap.values());
+            setReports(uniqueLocal);
+            localStorage.setItem('depV_reports', JSON.stringify(uniqueLocal));
+            for (const r of uniqueLocal) {
               apiAddReport(r);
             }
           }
@@ -174,7 +181,13 @@ function MainApp() {
             return prevCurrent;
           });
         }
-        if (serverDb.reports) setReports(serverDb.reports);
+        if (serverDb.reports) {
+          const uniqueRepMap = new Map<string, Report>();
+          serverDb.reports.forEach((r) => { if (r && r.id) uniqueRepMap.set(r.id, r); });
+          const uniqueReports = Array.from(uniqueRepMap.values());
+          setReports(uniqueReports);
+          localStorage.setItem('depV_reports', JSON.stringify(uniqueReports));
+        }
         if (serverDb.archives) setArchives(serverDb.archives);
         if (serverDb.admins) {
           setAdmins(serverDb.admins);
