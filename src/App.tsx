@@ -122,20 +122,8 @@ function MainApp() {
           const uniqueRepMap = new Map<string, Report>();
           serverDb.reports.forEach((r) => { if (r && r.id) uniqueRepMap.set(r.id, r); });
           const uniqueReports = Array.from(uniqueRepMap.values());
-
-          if (uniqueReports.length > 0) {
-            setReports(uniqueReports);
-            localStorage.setItem('depV_reports', JSON.stringify(uniqueReports));
-          } else if (stored.reports && stored.reports.length > 0) {
-            const localMap = new Map<string, Report>();
-            stored.reports.forEach((r) => { if (r && r.id) localMap.set(r.id, r); });
-            const uniqueLocal = Array.from(localMap.values());
-            setReports(uniqueLocal);
-            localStorage.setItem('depV_reports', JSON.stringify(uniqueLocal));
-            for (const r of uniqueLocal) {
-              apiAddReport(r);
-            }
-          }
+          setReports(uniqueReports);
+          localStorage.setItem('depV_reports', JSON.stringify(uniqueReports));
         }
 
         if (serverDb.archives) {
