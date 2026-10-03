@@ -119,8 +119,16 @@ function MainApp() {
         }
 
         if (serverDb.reports) {
-          setReports(serverDb.reports);
-          localStorage.setItem('depV_reports', JSON.stringify(serverDb.reports));
+          if (serverDb.reports.length > 0) {
+            setReports(serverDb.reports);
+            localStorage.setItem('depV_reports', JSON.stringify(serverDb.reports));
+          } else if (stored.reports && stored.reports.length > 0) {
+            setReports(stored.reports);
+            localStorage.setItem('depV_reports', JSON.stringify(stored.reports));
+            for (const r of stored.reports) {
+              apiAddReport(r);
+            }
+          }
         }
 
         if (serverDb.archives) {
