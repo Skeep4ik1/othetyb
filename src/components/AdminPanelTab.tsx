@@ -160,6 +160,17 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
     };
   }, [reports, summaryPeriod]);
 
+  const displayAdmins = useMemo(() => {
+    const set = new Set<string>(admins);
+    set.add(SUPER_ADMIN_ID);
+    users.forEach((u) => {
+      if (u.role === 'admin' || u.role === 'superadmin') {
+        set.add(u.staticId);
+      }
+    });
+    return Array.from(set);
+  }, [admins, users]);
+
   const handleAddAdmin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isCurator) {
@@ -338,28 +349,42 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
 
             <div className="space-y-2">
               <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider font-mono">
-                Действующие администраторы ({admins.length})
+                Действующие администраторы ({displayAdmins.length})
               </div>
 
-              {admins.map((adminId) => {
+              {displayAdmins.map((adminId) => {
                 const isSuper = adminId === SUPER_ADMIN_ID;
+                const matchedUser = users.find((u) => u.staticId === adminId);
+                const isHeadAdmin = matchedUser?.role === 'admin' || (!isSuper && admins.includes(adminId));
+
                 return (
                   <div
                     key={adminId}
                     className="flex items-center justify-between p-3 rounded-2xl bg-black border border-zinc-800"
                   >
-                    <div className="flex items-center space-x-2">
-                      <Shield className="w-4 h-4 text-white" />
-                      <span className="font-mono font-bold text-xs text-white">
-                        #{adminId}
-                      </span>
+                    <div className="flex items-center space-x-2 overflow-hidden">
+                      <Shield className="w-4 h-4 text-white shrink-0" />
+                      <div className="flex items-center space-x-1.5 truncate">
+                        {matchedUser && (
+                          <span className="font-bold text-xs text-white truncate">
+                            {matchedUser.nickname}
+                          </span>
+                        )}
+                        <span className="font-mono font-bold text-xs text-zinc-400">
+                          #{adminId}
+                        </span>
+                      </div>
                       {isSuper ? (
-                        <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/50">
+                        <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/50 shrink-0">
                           ★ Куратор
                         </span>
-                      ) : (
-                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/50">
+                      ) : isHeadAdmin ? (
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/50 shrink-0">
                           ★ Начальник
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/50 shrink-0">
+                          Админ
                         </span>
                       )}
                     </div>
@@ -367,7 +392,7 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
                     {!isSuper && (
                       <button
                         onClick={() => handleRevokeAdmin(adminId)}
-                        className="p-1 text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
+                        className="p-1 text-slate-500 hover:text-rose-400 transition-colors cursor-pointer shrink-0"
                         title="Отозвать права"
                       >
                         <Trash2 className="w-4 h-4" />

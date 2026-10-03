@@ -389,7 +389,14 @@ export async function getDbData(): Promise<AppDataType> {
       instructorSummary: (a.instructorSummary as WeeklyArchiveType['instructorSummary']) || [],
     }));
 
-    const adminList = dbAdmins.map((a) => a.staticId);
+    const adminSet = new Set<string>(dbAdmins.map((a) => a.staticId));
+    adminSet.add('21358');
+    mappedUsers.forEach((u) => {
+      if (u.role === 'admin' || u.role === 'superadmin') {
+        adminSet.add(u.staticId);
+      }
+    });
+    const adminList = Array.from(adminSet);
 
     const freshResult = {
       users: mappedUsers,
@@ -449,9 +456,13 @@ export async function upsertUserInDb(user: UserType) {
 export async function updateUserRoleInDb(staticId: string, role: string) {
   updateInMemoryStore((prev) => {
     const updatedUsers = prev.users.map((u) => (u.staticId === staticId ? { ...u, role: role as UserType['role'] } : u));
-    const updatedAdmins = [...prev.admins];
-    if ((role === 'admin' || role === 'superadmin') && !updatedAdmins.includes(staticId)) {
-      updatedAdmins.push(staticId);
+    let updatedAdmins = [...prev.admins];
+    if (role === 'admin' || role === 'superadmin') {
+      if (!updatedAdmins.includes(staticId)) {
+        updatedAdmins.push(staticId);
+      }
+    } else if (staticId !== '21358') {
+      updatedAdmins = updatedAdmins.filter((id) => id !== staticId);
     }
     return { ...prev, users: updatedUsers, admins: updatedAdmins };
   });
@@ -461,6 +472,8 @@ export async function updateUserRoleInDb(staticId: string, role: string) {
     await db.update(users).set({ role }).where(eq(users.staticId, staticId));
     if (role === 'admin' || role === 'superadmin') {
       await db.insert(admins).values({ staticId }).onConflictDoNothing();
+    } else if (staticId !== '21358') {
+      await db.delete(admins).where(eq(admins.staticId, staticId));
     }
   } catch (err) {
     console.error('Error updating user role in Cloud SQL:', err);

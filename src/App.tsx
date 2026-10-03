@@ -243,26 +243,31 @@ function MainApp() {
   };
 
   const handleUpdateUserRole = async (targetStaticId: string, role: string) => {
+    const newRole = role as User['role'];
     const updatedUsers = users.map((u) =>
-      u.staticId === targetStaticId ? { ...u, role: u.role === (role as User['role']) ? 'instructor' : (role as User['role']) } : u
+      u.staticId === targetStaticId ? { ...u, role: newRole } : u
     );
     setUsers(updatedUsers);
     localStorage.setItem('depV_users', JSON.stringify(updatedUsers));
 
     if (currentUser && currentUser.staticId === targetStaticId) {
-      const newRole = currentUser.role === (role as User['role']) ? 'instructor' : (role as User['role']);
       const updatedCurrent = { ...currentUser, role: newRole };
       setCurrentUser(updatedCurrent);
       localStorage.setItem('depV_user', JSON.stringify(updatedCurrent));
     }
 
-    if (role === 'admin' || role === 'superadmin') {
-      if (!admins.includes(targetStaticId)) {
-        const newAdmins = [...admins, targetStaticId];
-        setAdmins(newAdmins);
-        localStorage.setItem('depV_admins', JSON.stringify(newAdmins));
+    let newAdmins = [...admins];
+    if (newRole === 'admin' || newRole === 'superadmin') {
+      if (!newAdmins.includes(targetStaticId)) {
+        newAdmins.push(targetStaticId);
+      }
+    } else {
+      if (targetStaticId !== SUPER_ADMIN_ID) {
+        newAdmins = newAdmins.filter((id) => id !== targetStaticId);
       }
     }
+    setAdmins(newAdmins);
+    localStorage.setItem('depV_admins', JSON.stringify(newAdmins));
 
     await apiUpdateUserRole(targetStaticId, role);
     showToast('Должность сотрудника успешно обновлена!', 'success');
