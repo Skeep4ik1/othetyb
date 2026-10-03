@@ -110,29 +110,23 @@ export const loadStoredData = () => {
     const rawAdmins = localStorage.getItem('depV_admins');
     const rawArchives = localStorage.getItem('depV_archives');
 
-    let users: User[] = DEFAULT_USERS;
+    let users: User[] = [];
     if (rawUsers) {
       try {
         const parsed: User[] = JSON.parse(rawUsers);
         const userMap = new Map<string, User>();
-        // Always include DEFAULT_USERS first
-        DEFAULT_USERS.forEach((u) => userMap.set(u.staticId, u));
-        // Merge saved users
         parsed.forEach((u) => {
           if (u && u.staticId) {
             const normalized = u.staticId === SUPER_ADMIN_ID || u.nickname.toLowerCase().includes('станислав яров')
               ? { ...u, nickname: 'Станислав Яров', role: 'superadmin' as const }
               : u;
-            const existing = userMap.get(u.staticId);
-            userMap.set(u.staticId, existing ? { ...existing, ...normalized } : normalized);
+            userMap.set(u.staticId, normalized);
           }
         });
         users = Array.from(userMap.values());
       } catch {
-        users = DEFAULT_USERS;
+        users = [];
       }
-    } else {
-      localStorage.setItem('depV_users', JSON.stringify(DEFAULT_USERS));
     }
 
     let currentUser: User | null = rawUser ? JSON.parse(rawUser) : null;
