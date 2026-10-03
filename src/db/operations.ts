@@ -96,6 +96,7 @@ let inMemoryStore: AppDataType = {
       role: 'superadmin',
       rank: 'Куратор отдела',
       callsign: 'Яров',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
       createdAt: '2026-01-01T00:00:00.000Z',
     },
     {
@@ -105,6 +106,7 @@ let inMemoryStore: AppDataType = {
       role: 'admin',
       rank: 'Начальник отдела',
       callsign: 'Муров',
+      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
       createdAt: '2026-01-01T12:00:00.000Z',
     },
     {
@@ -114,6 +116,7 @@ let inMemoryStore: AppDataType = {
       role: 'senior_instructor',
       rank: 'Зам. начальника',
       callsign: 'Романов',
+      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
       createdAt: '2026-01-01T14:00:00.000Z',
     },
     {
@@ -123,6 +126,7 @@ let inMemoryStore: AppDataType = {
       role: 'senior_instructor',
       rank: 'Зам. начальника',
       callsign: 'Яровой',
+      avatarUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=300&auto=format&fit=crop&q=80',
       createdAt: '2026-01-01T16:00:00.000Z',
     },
     {
@@ -132,6 +136,7 @@ let inMemoryStore: AppDataType = {
       role: 'senior_instructor',
       rank: 'Зам. начальника',
       callsign: 'Мордашев',
+      avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&auto=format&fit=crop&q=80',
       createdAt: '2026-01-02T00:00:00.000Z',
     },
     {
@@ -141,6 +146,7 @@ let inMemoryStore: AppDataType = {
       role: 'instructor',
       rank: 'Инструктор отдела',
       callsign: 'Невский',
+      avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&auto=format&fit=crop&q=80',
       createdAt: '2026-01-03T00:00:00.000Z',
     },
     {
@@ -150,6 +156,7 @@ let inMemoryStore: AppDataType = {
       role: 'instructor',
       rank: 'Инструктор отдела',
       callsign: 'Никитин',
+      avatarUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=300&auto=format&fit=crop&q=80',
       createdAt: '2026-01-04T00:00:00.000Z',
     },
     {
@@ -159,6 +166,7 @@ let inMemoryStore: AppDataType = {
       role: 'instructor',
       rank: 'Инструктор отдела',
       callsign: 'Ватковский',
+      avatarUrl: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=300&auto=format&fit=crop&q=80',
       createdAt: '2026-01-05T00:00:00.000Z',
     },
     {
@@ -168,6 +176,7 @@ let inMemoryStore: AppDataType = {
       role: 'instructor',
       rank: 'Инструктор отдела',
       callsign: 'Романова',
+      avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80',
       createdAt: '2026-01-02T12:00:00.000Z',
     },
     {
@@ -177,6 +186,7 @@ let inMemoryStore: AppDataType = {
       role: 'instructor',
       rank: 'Инструктор отдела',
       callsign: 'Яров',
+      avatarUrl: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=300&auto=format&fit=crop&q=80',
       createdAt: '2026-01-02T15:00:00.000Z',
     },
     {
@@ -186,6 +196,7 @@ let inMemoryStore: AppDataType = {
       role: 'instructor',
       rank: 'Инструктор отдела',
       callsign: 'Троицкий',
+      avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop&q=80',
       createdAt: '2026-01-03T18:00:00.000Z',
     },
   ],
