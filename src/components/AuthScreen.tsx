@@ -111,32 +111,35 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({ users, onLogin, onRegist
     e.preventDefault();
     setErrorMsg(null);
 
-    const cleanStatic = loginStaticId.trim();
+    const cleanInput = loginStaticId.trim().replace(/^#\s*/, '');
     const cleanPass = loginPassword.trim();
 
-    if (!cleanStatic || !cleanPass) {
+    if (!cleanInput || !cleanPass) {
       setErrorMsg('Пожалуйста, введите Static ID и пароль');
       return;
     }
 
     const found = users.find(
       (u) =>
-        u.staticId === cleanStatic ||
-        u.nickname.toLowerCase() === cleanStatic.toLowerCase()
+        u.staticId.toLowerCase() === cleanInput.toLowerCase() ||
+        u.nickname.toLowerCase() === cleanInput.toLowerCase() ||
+        u.nickname.toLowerCase().includes(cleanInput.toLowerCase())
     );
 
     if (!found) {
-      setErrorMsg(`Инструктор со Static ID или Nickname "${cleanStatic}" не найден. Пройдите регистрацию.`);
+      setErrorMsg(`Инструктор со Static ID или Nickname "${cleanInput}" не найден. Пройдите регистрацию.`);
       return;
     }
 
-    // Check password
+    // Check password if set on user profile
     if (found.password && found.password !== cleanPass) {
       setErrorMsg('Неверный пароль доступа. Попробуйте снова.');
       return;
     }
 
-    onLogin(found);
+    // Save password on first login if not set yet
+    const loggedInUser = found.password ? found : { ...found, password: cleanPass };
+    onLogin(loggedInUser);
   };
 
   const handleRegisterSubmit = (e: React.FormEvent) => {

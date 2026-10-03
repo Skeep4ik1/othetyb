@@ -111,8 +111,8 @@ let inMemoryStore: AppDataType = {
     },
     {
       nickname: 'Кий Романов',
-      staticId: '44512',
-      discord: 'kiy_romanov',
+      staticId: '77618',
+      discord: 'yeb0k',
       role: 'senior_instructor',
       rank: 'Зам. начальника',
       callsign: 'Романов',
@@ -121,8 +121,8 @@ let inMemoryStore: AppDataType = {
     },
     {
       nickname: 'Семён Яровой',
-      staticId: '51293',
-      discord: 'yarovoy',
+      staticId: '2991',
+      discord: 'cheyzzed',
       role: 'senior_instructor',
       rank: 'Зам. начальника',
       callsign: 'Яровой',
@@ -201,7 +201,7 @@ let inMemoryStore: AppDataType = {
     },
   ],
   reports: [],
-  admins: ['21358', '32104', '44512', '51293', '19119'],
+  admins: ['21358', '32104', '77618', '2991', '19119'],
   archives: [],
 };
 

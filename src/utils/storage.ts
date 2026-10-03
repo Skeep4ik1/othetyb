@@ -46,8 +46,8 @@ export const DEFAULT_USERS: User[] = [
   },
   {
     nickname: 'Кий Романов',
-    staticId: '44512',
-    discord: 'kiy_romanov',
+    staticId: '77618',
+    discord: 'yeb0k',
     role: 'senior_instructor',
     rank: 'Зам. начальника',
     callsign: 'Романов',
@@ -56,8 +56,8 @@ export const DEFAULT_USERS: User[] = [
   },
   {
     nickname: 'Семён Яровой',
-    staticId: '51293',
-    discord: 'yarovoy',
+    staticId: '2991',
+    discord: 'cheyzzed',
     role: 'senior_instructor',
     rank: 'Зам. начальника',
     callsign: 'Яровой',

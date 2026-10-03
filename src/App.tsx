@@ -233,6 +233,7 @@ function MainApp() {
   const handleLogin = (user: User) => {
     setCurrentUser(user);
     localStorage.setItem('depV_user', JSON.stringify(user));
+    apiSaveUser(user);
     showToast(`Добро пожаловать, ${user.nickname}!`, 'success');
   };
 
