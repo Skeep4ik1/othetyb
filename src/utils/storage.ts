@@ -105,11 +105,57 @@ export const DEFAULT_USERS: User[] = [
     callsign: 'Романова',
     createdAt: '2026-01-02T12:00:00.000Z',
   },
+  {
+    nickname: 'Джамаль Яров',
+    staticId: '21359',
+    discord: 'jamal_yarov',
+    role: 'instructor',
+    rank: 'Инструктор отдела',
+    callsign: 'Яров',
+    createdAt: '2026-01-02T15:00:00.000Z',
+  },
+  {
+    nickname: 'Юрий Троицкий',
+    staticId: '63211',
+    discord: 'troitskiy',
+    role: 'instructor',
+    rank: 'Инструктор отдела',
+    callsign: 'Троицкий',
+    createdAt: '2026-01-03T18:00:00.000Z',
+  },
 ];
 
 export const DEMO_USERS = DEFAULT_USERS;
 
 export const INITIAL_REPORTS: Report[] = [
+  {
+    id: 'rep-21359-01',
+    userId: '21359',
+    nickname: 'Джамаль Яров',
+    discord: 'jamal_yarov',
+    date: '2026-10-03T11:30:00.000Z',
+    checkedReports: 2,
+    gatherings: 4,
+    arrests: 3,
+    events: 5,
+    status: 'approved',
+    proofUrl: 'https://imgur.com/gallery/example_jamal',
+    notes: 'Работа инструктора Джамаля Ярова',
+  },
+  {
+    id: 'rep-63211-01',
+    userId: '63211',
+    nickname: 'Юрий Троицкий',
+    discord: 'troitskiy',
+    date: '2026-10-03T10:30:00.000Z',
+    checkedReports: 3,
+    gatherings: 1,
+    arrests: 8,
+    events: 2,
+    status: 'approved',
+    proofUrl: 'https://imgur.com/gallery/example_troitskiy',
+    notes: 'Работа инструктора Юрия Троицкого',
+  },
   {
     id: 'rep-44513-01',
     userId: '44513',
