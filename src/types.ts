@@ -65,6 +65,6 @@ export interface WeeklyArchive {
   }[];
 }
 
-export type ActiveTab = 'new' | 'history' | 'instructors' | 'analytics' | 'admin' | 'archive';
+export type ActiveTab = 'new' | 'history' | 'instructors' | 'analytics' | 'admin' | 'archive' | 'info';
 
 export type ThemeMode = 'dark' | 'light' | 'system';

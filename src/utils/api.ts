@@ -153,6 +153,23 @@ export async function apiSaveAdmins(admins: string[]): Promise<DbData | null> {
   return null;
 }
 
+export async function apiSaveArchive(archive: WeeklyArchive): Promise<DbData | null> {
+  try {
+    const res = await fetch('/api/archives', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ archive }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data;
+    }
+  } catch (err) {
+    console.error('Failed to save archive via API:', err);
+  }
+  return null;
+}
+
 export async function apiArchiveWeek(title?: string, closedBy?: string): Promise<DbData | null> {
   try {
     const res = await fetch('/api/archive-week', {

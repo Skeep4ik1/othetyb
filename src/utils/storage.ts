@@ -43,6 +43,7 @@ export const loadStoredData = () => {
     const rawUsers = localStorage.getItem('depV_users');
     const rawReports = localStorage.getItem('depV_reports');
     const rawAdmins = localStorage.getItem('depV_admins');
+    const rawArchives = localStorage.getItem('depV_archives');
 
     let users: User[] = DEFAULT_USERS;
     if (rawUsers) {
@@ -99,7 +100,16 @@ export const loadStoredData = () => {
       }
     }
 
-    return { currentUser, users, reports, admins };
+    let archives: any[] = [];
+    if (rawArchives) {
+      try {
+        archives = JSON.parse(rawArchives);
+      } catch {
+        archives = [];
+      }
+    }
+
+    return { currentUser, users, reports, admins, archives };
   } catch (error) {
     console.error('Failed to load storage data:', error);
     return {
@@ -107,6 +117,7 @@ export const loadStoredData = () => {
       users: DEFAULT_USERS,
       reports: [],
       admins: [SUPER_ADMIN_ID],
+      archives: [],
     };
   }
 };

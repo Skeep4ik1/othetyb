@@ -22,6 +22,7 @@ import {
   apiSaveAdmins,
   apiResetData,
   apiArchiveWeek,
+  apiSaveArchive,
   apiDeleteArchive,
   apiSendHeartbeat,
   apiUpdateUserRole,
@@ -38,6 +39,7 @@ import { InstructorsTab } from './components/InstructorsTab';
 import { AnalyticsTab } from './components/AnalyticsTab';
 import { AdminPanelTab } from './components/AdminPanelTab';
 import { WeeklyArchivesTab } from './components/WeeklyArchivesTab';
+import { InfoTab } from './components/InfoTab';
 import { ReportDetailModal } from './components/ReportDetailModal';
 import { UserProfileModal } from './components/UserProfileModal';
 import { ToastContainer, ToastData } from './components/Toast';
@@ -78,6 +80,9 @@ function MainApp() {
     setUsers(stored.users);
     setReports(stored.reports);
     setAdmins(stored.admins);
+    if (stored.archives && stored.archives.length > 0) {
+      setArchives(stored.archives);
+    }
 
     // 2. Initial server load
     const syncWithServer = async () => {
@@ -132,8 +137,21 @@ function MainApp() {
         }
 
         if (serverDb.archives) {
-          setArchives(serverDb.archives);
-          localStorage.setItem('depV_archives', JSON.stringify(serverDb.archives));
+          const serverArchiveMap = new Map<string, WeeklyArchive>();
+          serverDb.archives.forEach((a) => serverArchiveMap.set(a.id, a));
+
+          let mergedArchives = [...serverDb.archives];
+          if (stored.archives) {
+            for (const localA of stored.archives) {
+              if (localA.id && !serverArchiveMap.has(localA.id)) {
+                mergedArchives.unshift(localA);
+                apiSaveArchive(localA);
+              }
+            }
+          }
+
+          setArchives(mergedArchives);
+          localStorage.setItem('depV_archives', JSON.stringify(mergedArchives));
         }
 
         if (serverDb.admins) {
@@ -508,6 +526,18 @@ function MainApp() {
                 showToast={showToast}
                 onGoToNewReport={() => setActiveTab('new')}
               />
+            </motion.div>
+          )}
+
+          {activeTab === 'info' && (
+            <motion.div
+              key="info"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <InfoTab />
             </motion.div>
           )}
 

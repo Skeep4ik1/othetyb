@@ -10,7 +10,7 @@ import {
   RotateCcw, 
   Crown
 } from 'lucide-react';
-import { User, Report } from '../types';
+import { User, Report, ActiveTab } from '../types';
 import { useTheme } from '../context/ThemeContext';
 import { SUPER_ADMIN_ID, exportReportsToCSV } from '../utils/storage';
 
@@ -23,7 +23,7 @@ interface MobileDrawerProps {
   reports: Report[];
   onResetSeedData: () => void;
   showToast: (msg: string, type?: 'success' | 'info' | 'error') => void;
-  onNavigateTab?: (tab: 'new' | 'history' | 'instructors' | 'analytics' | 'admin' | 'archive') => void;
+  onNavigateTab?: (tab: ActiveTab) => void;
   isAdmin?: boolean;
 }
 
@@ -153,6 +153,20 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                 <span className="flex items-center space-x-2">
                   <span className="text-white">📁</span>
                   <span>Архив еженедельных отчётов</span>
+                </span>
+                <span className="text-zinc-500">→</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  onNavigateTab('info');
+                  onClose();
+                }}
+                className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-black border border-zinc-800 hover:border-zinc-600 text-xs font-bold text-zinc-200 hover:text-white"
+              >
+                <span className="flex items-center space-x-2">
+                  <span className="text-white">ℹ️</span>
+                  <span>Информация и справочник</span>
                 </span>
                 <span className="text-zinc-500">→</span>
               </button>

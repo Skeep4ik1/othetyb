@@ -551,6 +551,58 @@ export async function deleteReportFromDb(id: string) {
   }
 }
 
+export async function upsertArchiveInDb(archive: WeeklyArchiveType) {
+  updateInMemoryStore((prev) => {
+    const idx = prev.archives.findIndex((a) => a.id === archive.id);
+    const updated = [...prev.archives];
+    if (idx >= 0) {
+      updated[idx] = archive;
+    } else {
+      updated.unshift(archive);
+    }
+    return { ...prev, archives: updated };
+  });
+
+  if (!isDbAvailable()) return;
+  try {
+    await db.insert(archives).values({
+      id: archive.id,
+      title: archive.title,
+      startDate: archive.startDate,
+      endDate: archive.endDate,
+      closedBy: archive.closedBy,
+      closedAt: archive.closedAt,
+      reportsCount: archive.reportsCount,
+      totalPoints: archive.totalPoints,
+      totalCheckedReports: archive.totalCheckedReports,
+      totalGatherings: archive.totalGatherings,
+      totalArrests: archive.totalArrests,
+      totalEvents: archive.totalEvents,
+      archivedReports: archive.archivedReports,
+      instructorSummary: archive.instructorSummary,
+    }).onConflictDoUpdate({
+      target: archives.id,
+      set: {
+        title: archive.title,
+        startDate: archive.startDate,
+        endDate: archive.endDate,
+        closedBy: archive.closedBy,
+        closedAt: archive.closedAt,
+        reportsCount: archive.reportsCount,
+        totalPoints: archive.totalPoints,
+        totalCheckedReports: archive.totalCheckedReports,
+        totalGatherings: archive.totalGatherings,
+        totalArrests: archive.totalArrests,
+        totalEvents: archive.totalEvents,
+        archivedReports: archive.archivedReports,
+        instructorSummary: archive.instructorSummary,
+      },
+    });
+  } catch (err) {
+    console.error('Error upserting archive in Cloud SQL:', err);
+  }
+}
+
 export async function saveArchiveInDb(archive: WeeklyArchiveType) {
   updateInMemoryStore((prev) => ({
     ...prev,

@@ -15,7 +15,8 @@ import {
   Camera,
   X,
   Check,
-  Archive
+  Archive,
+  Info
 } from 'lucide-react';
 import { ActiveTab, User, Report } from '../types';
 import { useTheme } from '../context/ThemeContext';
@@ -236,6 +237,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )}
                 <Archive className="w-4 h-4" />
                 <span>Архив недель</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('info')}
+                className={`relative px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center space-x-1.5 whitespace-nowrap cursor-pointer ${
+                  activeTab === 'info'
+                    ? 'text-slate-900 dark:text-white font-bold'
+                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-900'
+                }`}
+              >
+                {activeTab === 'info' && (
+                  <motion.div
+                    layoutId="desktop-tab-indicator"
+                    className="absolute inset-0 bg-slate-200/80 dark:bg-zinc-800 border border-slate-300 dark:border-zinc-700 rounded-xl -z-10 shadow-inner"
+                    transition={{ type: 'spring', bounce: 0.15, duration: 0.4 }}
+                  />
+                )}
+                <Info className="w-4 h-4" />
+                <span>Информация</span>
               </button>
 
               {isAdmin && (

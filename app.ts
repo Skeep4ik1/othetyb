@@ -13,6 +13,7 @@ import {
   createReportInDb,
   deleteReportFromDb,
   saveArchiveInDb,
+  upsertArchiveInDb,
   deleteArchiveFromDb,
   deleteUserFromDb,
 } from './src/db/operations.ts';
@@ -646,6 +647,33 @@ app.post('/api/archive-week', async (req, res) => {
     archives: data.archives,
     reports: data.reports,
   });
+});
+
+app.post('/api/archives', async (req, res) => {
+  const { archive } = req.body;
+  if (!archive || !archive.id) {
+    return res.status(400).json({ error: 'Archive object and id are required' });
+  }
+
+  if (isDbAvailable()) {
+    try {
+      await upsertArchiveInDb(archive);
+      const freshData = await getDbData();
+      return res.json({ success: true, archive, archives: freshData.archives });
+    } catch (err) {
+      console.error('Error saving archive in Cloud SQL:', err);
+    }
+  }
+
+  const data = readData();
+  const idx = data.archives.findIndex((a) => a.id === archive.id);
+  if (idx >= 0) {
+    data.archives[idx] = archive;
+  } else {
+    data.archives.unshift(archive);
+  }
+  writeData(data);
+  res.json({ success: true, archive, archives: data.archives });
 });
 
 app.delete('/api/archives/:id', async (req, res) => {
