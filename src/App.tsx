@@ -89,20 +89,20 @@ function MainApp() {
       const serverDb = await fetchDbData();
       if (serverDb) {
         if (serverDb.users && serverDb.users.length > 0) {
-          const serverUserMap = new Map<string, User>();
-          serverDb.users.forEach((u) => serverUserMap.set(u.staticId, u));
-
-          let mergedUsers = [...serverDb.users];
+          const userMap = new Map<string, User>();
+          serverDb.users.forEach((u) => { if (u && u.staticId) userMap.set(u.staticId, u); });
 
           // Check if stored local users have any missing users that server doesn't have yet
           if (stored.users) {
             for (const localU of stored.users) {
-              if (localU.staticId && !serverUserMap.has(localU.staticId)) {
-                mergedUsers.push(localU);
+              if (localU && localU.staticId && !userMap.has(localU.staticId)) {
+                userMap.set(localU.staticId, localU);
                 apiSaveUser(localU);
               }
             }
           }
+
+          const mergedUsers = Array.from(userMap.values());
 
           setUsers(mergedUsers);
           localStorage.setItem('depV_users', JSON.stringify(mergedUsers));
@@ -161,13 +161,17 @@ function MainApp() {
       const serverDb = await fetchDbData();
       if (serverDb) {
         if (serverDb.users && serverDb.users.length > 0) {
-          setUsers(serverDb.users);
-          localStorage.setItem('depV_users', JSON.stringify(serverDb.users));
+          const pollingUserMap = new Map<string, User>();
+          serverDb.users.forEach((u) => { if (u && u.staticId) pollingUserMap.set(u.staticId, u); });
+          const uniqueUsers = Array.from(pollingUserMap.values());
+
+          setUsers(uniqueUsers);
+          localStorage.setItem('depV_users', JSON.stringify(uniqueUsers));
 
           // Real-time synchronization of currentUser when role / nickname / avatar changes
           setCurrentUser((prevCurrent) => {
             if (!prevCurrent?.staticId) return prevCurrent;
-            const freshMe = serverDb.users.find((u) => u.staticId === prevCurrent.staticId);
+            const freshMe = uniqueUsers.find((u) => u.staticId === prevCurrent.staticId);
             if (freshMe) {
               if (
                 freshMe.role !== prevCurrent.role ||

@@ -94,12 +94,58 @@ let inMemoryStore: AppDataType = {
       discord: 'nensikq',
       password: 'admin',
       role: 'superadmin',
+      rank: 'Начальник отдела',
+      callsign: 'Яров',
       createdAt: '2026-01-01T00:00:00.000Z',
+    },
+    {
+      nickname: 'Алексей Мордашев',
+      staticId: '19119',
+      discord: 'ahh063',
+      role: 'senior_instructor',
+      rank: 'Зам. начальника',
+      callsign: 'Мордашев',
+      createdAt: '2026-01-02T00:00:00.000Z',
+    },
+    {
+      nickname: 'Стас Невский',
+      staticId: '15453',
+      discord: 'stragj',
+      role: 'instructor',
+      rank: 'Инструктор отдела',
+      callsign: 'Невский',
+      createdAt: '2026-01-03T00:00:00.000Z',
+    },
+    {
+      nickname: 'Вячеслав Никитин',
+      staticId: '73336',
+      discord: 'evolu7ioni',
+      role: 'instructor',
+      rank: 'Инструктор отдела',
+      callsign: 'Никитин',
+      createdAt: '2026-01-04T00:00:00.000Z',
+    },
+    {
+      nickname: 'Максим Ватковский',
+      staticId: '56808',
+      discord: 'qweatr',
+      role: 'instructor',
+      rank: 'Инструктор отдела',
+      callsign: 'Ватковский',
+      createdAt: '2026-01-05T00:00:00.000Z',
     },
   ],
   reports: [],
-  admins: ['21358'],
+  admins: ['21358', '19119'],
   archives: [],
+};
+
+const deduplicateUsers = (us: UserType[]): UserType[] => {
+  const map = new Map<string, UserType>();
+  for (const u of us) {
+    if (u && u.staticId) map.set(u.staticId, u);
+  }
+  return Array.from(map.values());
 };
 
 const deduplicateReports = (reps: ReportType[]): ReportType[] => {
@@ -123,7 +169,7 @@ const initInMemoryStore = () => {
       try {
         const parsed = JSON.parse(fs.readFileSync(p, 'utf-8'));
         inMemoryStore = {
-          users: Array.isArray(parsed.users) ? parsed.users : inMemoryStore.users,
+          users: Array.isArray(parsed.users) ? deduplicateUsers(parsed.users) : inMemoryStore.users,
           reports: Array.isArray(parsed.reports) ? deduplicateReports(parsed.reports) : [],
           admins: Array.isArray(parsed.admins) ? parsed.admins : ['21358'],
           archives: Array.isArray(parsed.archives) ? parsed.archives : [],
@@ -139,6 +185,9 @@ initInMemoryStore();
 
 export const updateInMemoryStore = (updater: (prev: AppDataType) => AppDataType) => {
   inMemoryStore = updater(inMemoryStore);
+  if (inMemoryStore.users) {
+    inMemoryStore.users = deduplicateUsers(inMemoryStore.users);
+  }
   if (inMemoryStore.reports) {
     inMemoryStore.reports = deduplicateReports(inMemoryStore.reports);
   }
@@ -346,27 +395,33 @@ export async function getDbData(): Promise<AppDataType> {
     const dbArchives = await db.select().from(archives).orderBy(desc(archives.createdAt));
     const dbAdmins = await db.select().from(admins);
 
-    const mappedUsers: UserType[] = dbUsers.map((u) => ({
-      staticId: u.staticId,
-      nickname: u.nickname,
-      discord: u.discord,
-      password: u.password || undefined,
-      role: (u.role as UserType['role']) || 'instructor',
-      rank: u.rank || undefined,
-      callsign: u.callsign || undefined,
-      avatarUrl: u.avatarUrl || undefined,
-      createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : undefined,
-    }));
+    const uniqueUsersMap = new Map<string, UserType>();
+    dbUsers.forEach((u) => {
+      if (u && u.staticId) {
+        uniqueUsersMap.set(u.staticId, {
+          staticId: u.staticId,
+          nickname: u.nickname,
+          discord: u.discord,
+          password: u.password || undefined,
+          role: (u.role as UserType['role']) || 'instructor',
+          rank: u.rank || undefined,
+          callsign: u.callsign || undefined,
+          avatarUrl: u.avatarUrl || undefined,
+          createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : undefined,
+        });
+      }
+    });
 
-    if (!mappedUsers.some((u) => u.staticId === '21358')) {
-      mappedUsers.unshift({
-        nickname: 'Станислав Яров',
-        staticId: '21358',
-        discord: 'nensikq',
-        password: 'admin',
-        role: 'superadmin',
+    // Ensure initial department instructors are always present if DB table missed any
+    if (inMemoryStore.users) {
+      inMemoryStore.users.forEach((u) => {
+        if (u && u.staticId && !uniqueUsersMap.has(u.staticId)) {
+          uniqueUsersMap.set(u.staticId, u);
+        }
       });
     }
+
+    const mappedUsers = Array.from(uniqueUsersMap.values());
 
     const uniqueDbReportsMap = new Map<string, ReportType>();
     dbReports.forEach((r) => {

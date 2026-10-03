@@ -29,7 +29,45 @@ export const DEFAULT_USERS: User[] = [
     discord: 'nensikq',
     password: 'admin',
     role: 'superadmin',
+    rank: 'Начальник отдела',
+    callsign: 'Яров',
     createdAt: '2026-01-01T00:00:00.000Z',
+  },
+  {
+    nickname: 'Алексей Мордашев',
+    staticId: '19119',
+    discord: 'ahh063',
+    role: 'senior_instructor',
+    rank: 'Зам. начальника',
+    callsign: 'Мордашев',
+    createdAt: '2026-01-02T00:00:00.000Z',
+  },
+  {
+    nickname: 'Стас Невский',
+    staticId: '15453',
+    discord: 'stragj',
+    role: 'instructor',
+    rank: 'Инструктор отдела',
+    callsign: 'Невский',
+    createdAt: '2026-01-03T00:00:00.000Z',
+  },
+  {
+    nickname: 'Вячеслав Никитин',
+    staticId: '73336',
+    discord: 'evolu7ioni',
+    role: 'instructor',
+    rank: 'Инструктор отдела',
+    callsign: 'Никитин',
+    createdAt: '2026-01-04T00:00:00.000Z',
+  },
+  {
+    nickname: 'Максим Ватковский',
+    staticId: '56808',
+    discord: 'qweatr',
+    role: 'instructor',
+    rank: 'Инструктор отдела',
+    callsign: 'Ватковский',
+    createdAt: '2026-01-05T00:00:00.000Z',
   },
 ];
 
@@ -120,13 +158,20 @@ export const loadStoredData = () => {
     if (rawUsers) {
       try {
         const parsed: User[] = JSON.parse(rawUsers);
-        const normalized = parsed.map((u) => 
-          u.staticId === SUPER_ADMIN_ID || u.nickname.toLowerCase().includes('станислав яров')
-            ? { ...u, nickname: 'Станислав Яров', role: 'superadmin' as const }
-            : u
-        );
-        const hasStanislav = normalized.some((u) => u.staticId === SUPER_ADMIN_ID);
-        users = hasStanislav ? normalized : [DEFAULT_USERS[0], ...normalized];
+        const userMap = new Map<string, User>();
+        // Always include DEFAULT_USERS first
+        DEFAULT_USERS.forEach((u) => userMap.set(u.staticId, u));
+        // Merge saved users
+        parsed.forEach((u) => {
+          if (u && u.staticId) {
+            const normalized = u.staticId === SUPER_ADMIN_ID || u.nickname.toLowerCase().includes('станислав яров')
+              ? { ...u, nickname: 'Станислав Яров', role: 'superadmin' as const }
+              : u;
+            const existing = userMap.get(u.staticId);
+            userMap.set(u.staticId, existing ? { ...existing, ...normalized } : normalized);
+          }
+        });
+        users = Array.from(userMap.values());
       } catch {
         users = DEFAULT_USERS;
       }
