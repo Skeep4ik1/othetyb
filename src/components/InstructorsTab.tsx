@@ -88,8 +88,8 @@ export const InstructorsTab: React.FC<InstructorsTabProps> = ({
       const events = userReports.reduce((sum, r) => sum + (r.events ?? r.trainings ?? 0), 0);
       
       const isSuperAdmin = user.staticId === SUPER_ADMIN_ID || user.role === 'superadmin';
-      const isChief = user.role === 'admin' || (admins.includes(user.staticId) && !isSuperAdmin);
       const isDeputyChief = user.role === 'senior_instructor';
+      const isChief = user.role === 'admin';
       const isOnline = user.staticId === currentUser.staticId || onlineUsers.includes(user.staticId);
 
       return {
