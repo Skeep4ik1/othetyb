@@ -133,8 +133,19 @@ function MainApp() {
 
         if (serverDb.reports) {
           const uniqueRepMap = new Map<string, Report>();
+          INITIAL_REPORTS.forEach((r) => uniqueRepMap.set(r.id, r));
+          if (stored.reports) {
+            stored.reports.forEach((r) => { if (r && r.id) uniqueRepMap.set(r.id, r); });
+          }
           serverDb.reports.forEach((r) => { if (r && r.id) uniqueRepMap.set(r.id, r); });
           const uniqueReports = Array.from(uniqueRepMap.values());
+
+          uniqueReports.forEach((rep) => {
+            if (!serverDb.reports.some((sr) => sr.id === rep.id)) {
+              apiAddReport(rep);
+            }
+          });
+
           setReports(uniqueReports);
           localStorage.setItem('depV_reports', JSON.stringify(uniqueReports));
         }

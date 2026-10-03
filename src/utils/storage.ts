@@ -100,7 +100,78 @@ export const DEFAULT_USERS: User[] = [
 
 export const DEMO_USERS = DEFAULT_USERS;
 
-export const INITIAL_REPORTS: Report[] = [];
+export const INITIAL_REPORTS: Report[] = [
+  {
+    id: 'rep-19119-01',
+    userId: '19119',
+    nickname: 'Алексей Мордашев',
+    discord: 'ahh063',
+    date: '2026-10-03T12:00:00.000Z',
+    checkedReports: 0,
+    gatherings: 3,
+    arrests: 0,
+    events: 14,
+    status: 'approved',
+    proofUrl: 'https://imgur.com/gallery/example1',
+    notes: 'Сборы и участие в мероприятиях',
+  },
+  {
+    id: 'rep-15453-01',
+    userId: '15453',
+    nickname: 'Стас Невский',
+    discord: 'stragj',
+    date: '2026-10-03T10:00:00.000Z',
+    checkedReports: 2,
+    gatherings: 0,
+    arrests: 0,
+    events: 7,
+    status: 'approved',
+    proofUrl: 'https://imgur.com/gallery/example2',
+    notes: 'Проверенные отчёты и фракционные мероприятия',
+  },
+  {
+    id: 'rep-73336-01',
+    userId: '73336',
+    nickname: 'Вячеслав Никитин',
+    discord: 'evolu7ioni',
+    date: '2026-10-02T18:00:00.000Z',
+    checkedReports: 1,
+    gatherings: 0,
+    arrests: 14,
+    events: 2,
+    status: 'approved',
+    proofUrl: 'https://imgur.com/gallery/example3',
+    notes: 'Задержания нарушителей и мероприятия',
+  },
+  {
+    id: 'rep-56808-01',
+    userId: '56808',
+    nickname: 'Максим Ватковский',
+    discord: 'qweatr',
+    date: '2026-10-02T15:00:00.000Z',
+    checkedReports: 4,
+    gatherings: 0,
+    arrests: 0,
+    events: 0,
+    status: 'approved',
+    proofUrl: 'https://imgur.com/gallery/example4',
+    notes: 'Проверка квалификационных отчётов',
+  },
+  {
+    id: 'rep-21358-01',
+    userId: '21358',
+    nickname: 'Станислав Яров',
+    discord: 'nensikq',
+    date: '2026-09-28T21:47:34.000Z',
+    checkedReports: 5,
+    gatherings: 3,
+    arrests: 5,
+    events: 2,
+    status: 'approved',
+    proofUrl: 'https://imgur.com/gallery/example5',
+    notes: 'Работа Куратора',
+  },
+];
 
 export const loadStoredData = () => {
   try {
@@ -141,12 +212,13 @@ export const loadStoredData = () => {
       }
     }
 
-    let reports: Report[] = INITIAL_REPORTS;
+    const repMap = new Map<string, Report>();
+    INITIAL_REPORTS.forEach((r) => repMap.set(r.id, r));
+
     if (rawReports) {
       try {
         const parsed: any[] = JSON.parse(rawReports);
-        if (parsed.length > 0) {
-          const repMap = new Map<string, Report>();
+        if (Array.isArray(parsed)) {
           parsed.forEach((r) => {
             if (r && r.id) {
               repMap.set(r.id, {
@@ -156,20 +228,16 @@ export const loadStoredData = () => {
                 gatherings: r.gatherings ?? r.gathered ?? 0,
                 arrests: r.arrests ?? 0,
                 events: r.events ?? r.trainings ?? 0,
-                status: 'approved',
+                status: r.status || 'approved',
               });
             }
           });
-          reports = Array.from(repMap.values());
-        } else {
-          reports = INITIAL_REPORTS;
         }
       } catch {
-        reports = INITIAL_REPORTS;
+        // ignore
       }
-    } else {
-      localStorage.setItem('depV_reports', JSON.stringify(INITIAL_REPORTS));
     }
+    const reports: Report[] = Array.from(repMap.values());
 
     let admins: string[] = [SUPER_ADMIN_ID];
     if (rawAdmins) {

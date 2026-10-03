@@ -497,6 +497,16 @@ export async function getDbData(): Promise<AppDataType> {
         });
       }
     });
+
+    // Also include reports stored in server_data.json / inMemoryStore
+    if (inMemoryStore.reports && Array.isArray(inMemoryStore.reports)) {
+      inMemoryStore.reports.forEach((r) => {
+        if (r && r.id && !uniqueDbReportsMap.has(r.id)) {
+          uniqueDbReportsMap.set(r.id, r);
+        }
+      });
+    }
+
     const mappedReports = Array.from(uniqueDbReportsMap.values());
 
     const mappedArchives: WeeklyArchiveType[] = dbArchives.map((a) => ({
