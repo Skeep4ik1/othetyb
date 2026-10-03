@@ -138,7 +138,11 @@ export const loadStoredData = () => {
     if (currentUser) {
       const matched = users.find((u) => u.staticId === currentUser?.staticId);
       if (matched) {
-        currentUser = matched;
+        currentUser = {
+          ...currentUser,
+          ...matched,
+          role: matched.role || currentUser.role || 'instructor',
+        };
       }
     }
 

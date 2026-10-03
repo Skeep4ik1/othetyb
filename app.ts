@@ -335,24 +335,9 @@ app.get('/api/db', async (req, res) => {
 });
 
 app.post('/api/heartbeat', async (req, res) => {
-  const { staticId, user } = req.body;
+  const { staticId } = req.body;
   if (staticId) {
     activePresence.set(String(staticId), Date.now());
-  }
-
-  if (user && user.staticId) {
-    const data = readData();
-    if (!data.users.some((u) => u.staticId === user.staticId)) {
-      data.users.push(user);
-      writeData(data);
-    }
-    if (isDbAvailable()) {
-      try {
-        await upsertUserInDb(user);
-      } catch {
-        // ignore
-      }
-    }
   }
 
   res.json({ success: true, onlineUsers: getOnlineStaticIds() });
@@ -369,10 +354,12 @@ app.post('/api/users/role', async (req, res) => {
 
   if (user) {
     user.role = role;
-    if (role === 'admin' || role === 'superadmin') {
+    if (role === 'admin' || role === 'superadmin' || role === 'senior_instructor') {
       if (!data.admins.includes(user.staticId)) {
         data.admins.push(user.staticId);
       }
+    } else if (user.staticId !== '21358') {
+      data.admins = data.admins.filter((id) => id !== user.staticId);
     }
     writeData(data);
   }
@@ -405,7 +392,10 @@ app.post('/api/users', async (req, res) => {
   const existingIndex = data.users.findIndex((u) => u.staticId === user.staticId);
 
   if (existingIndex >= 0) {
-    data.users[existingIndex] = { ...data.users[existingIndex], ...user };
+    // Preserve existing role!
+    const existingRole = data.users[existingIndex].role || 'instructor';
+    const roleToKeep = (user.role && user.role !== 'instructor') ? user.role : existingRole;
+    data.users[existingIndex] = { ...data.users[existingIndex], ...user, role: roleToKeep };
   } else {
     data.users.push(user);
   }

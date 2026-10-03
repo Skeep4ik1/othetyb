@@ -164,7 +164,7 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
     const set = new Set<string>(admins);
     set.add(SUPER_ADMIN_ID);
     users.forEach((u) => {
-      if (u.role === 'admin' || u.role === 'superadmin') {
+      if (u.role === 'admin' || u.role === 'superadmin' || u.role === 'senior_instructor') {
         set.add(u.staticId);
       }
     });
@@ -200,6 +200,9 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
       return;
     }
     setAdmins(admins.filter((id) => id !== staticId));
+    if (onUpdateUserRole) {
+      onUpdateUserRole(staticId, 'instructor');
+    }
     showToast(`Права администратора у #${staticId} отозваны`, 'info');
   };
 
@@ -355,7 +358,8 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
               {displayAdmins.map((adminId) => {
                 const isSuper = adminId === SUPER_ADMIN_ID;
                 const matchedUser = users.find((u) => u.staticId === adminId);
-                const isHeadAdmin = matchedUser?.role === 'admin' || (!isSuper && admins.includes(adminId));
+                const isHeadAdmin = matchedUser?.role === 'admin';
+                const isDeputyAdmin = matchedUser?.role === 'senior_instructor';
 
                 return (
                   <div
@@ -381,6 +385,10 @@ export const AdminPanelTab: React.FC<AdminPanelTabProps> = ({
                       ) : isHeadAdmin ? (
                         <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/50 shrink-0">
                           ★ Начальник
+                        </span>
+                      ) : isDeputyAdmin ? (
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/50 shrink-0">
+                          ★ Зам. начальника
                         </span>
                       ) : (
                         <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/50 shrink-0">

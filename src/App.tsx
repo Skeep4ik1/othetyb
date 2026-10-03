@@ -153,10 +153,33 @@ function MainApp() {
     const interval = setInterval(async () => {
       const serverDb = await fetchDbData();
       if (serverDb) {
-        if (serverDb.users && serverDb.users.length > 0) setUsers(serverDb.users);
+        if (serverDb.users && serverDb.users.length > 0) {
+          setUsers(serverDb.users);
+          localStorage.setItem('depV_users', JSON.stringify(serverDb.users));
+
+          // Real-time synchronization of currentUser when role / nickname / avatar changes
+          setCurrentUser((prevCurrent) => {
+            if (!prevCurrent?.staticId) return prevCurrent;
+            const freshMe = serverDb.users.find((u) => u.staticId === prevCurrent.staticId);
+            if (freshMe) {
+              if (
+                freshMe.role !== prevCurrent.role ||
+                freshMe.nickname !== prevCurrent.nickname ||
+                freshMe.avatarUrl !== prevCurrent.avatarUrl
+              ) {
+                localStorage.setItem('depV_user', JSON.stringify(freshMe));
+                return freshMe;
+              }
+            }
+            return prevCurrent;
+          });
+        }
         if (serverDb.reports) setReports(serverDb.reports);
         if (serverDb.archives) setArchives(serverDb.archives);
-        if (serverDb.admins) setAdmins(serverDb.admins);
+        if (serverDb.admins) {
+          setAdmins(serverDb.admins);
+          localStorage.setItem('depV_admins', JSON.stringify(serverDb.admins));
+        }
         if (serverDb.onlineUsers) setOnlineUsers(serverDb.onlineUsers);
       }
     }, 3000);
@@ -169,7 +192,7 @@ function MainApp() {
     if (!currentUser?.staticId) return;
 
     const sendPing = async () => {
-      const online = await apiSendHeartbeat(currentUser.staticId, currentUser);
+      const online = await apiSendHeartbeat(currentUser.staticId);
       if (online) setOnlineUsers(online);
     };
 
@@ -239,7 +262,7 @@ function MainApp() {
     }
 
     let newAdmins = [...admins];
-    if (newRole === 'admin' || newRole === 'superadmin') {
+    if (newRole === 'admin' || newRole === 'superadmin' || newRole === 'senior_instructor') {
       if (!newAdmins.includes(targetStaticId)) {
         newAdmins.push(targetStaticId);
       }
@@ -370,10 +393,16 @@ function MainApp() {
     }
   };
 
-  // Determine if current user is admin
+  // Determine if current user is admin / leadership
   const isAdmin = useMemo(() => {
     if (!currentUser) return false;
-    return admins.includes(currentUser.staticId) || currentUser.staticId === SUPER_ADMIN_ID;
+    return (
+      admins.includes(currentUser.staticId) ||
+      currentUser.staticId === SUPER_ADMIN_ID ||
+      currentUser.role === 'superadmin' ||
+      currentUser.role === 'admin' ||
+      currentUser.role === 'senior_instructor'
+    );
   }, [currentUser, admins]);
 
   const myReportsCount = useMemo(() => {

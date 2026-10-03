@@ -395,7 +395,7 @@ export async function getDbData(): Promise<AppDataType> {
     const adminSet = new Set<string>(dbAdmins.map((a) => a.staticId));
     adminSet.add('21358');
     mappedUsers.forEach((u) => {
-      if (u.role === 'admin' || u.role === 'superadmin') {
+      if (u.role === 'admin' || u.role === 'superadmin' || u.role === 'senior_instructor') {
         adminSet.add(u.staticId);
       }
     });
@@ -421,7 +421,10 @@ export async function upsertUserInDb(user: UserType) {
     const idx = prev.users.findIndex((u) => u.staticId === user.staticId);
     const updatedUsers = [...prev.users];
     if (idx >= 0) {
-      updatedUsers[idx] = { ...updatedUsers[idx], ...user };
+      // PRESERVE the existing role! Do not let a profile update or default value downgrade the role!
+      const currentRole = prev.users[idx].role || 'instructor';
+      const roleToKeep = (user.role && user.role !== 'instructor') ? user.role : currentRole;
+      updatedUsers[idx] = { ...updatedUsers[idx], ...user, role: roleToKeep };
     } else {
       updatedUsers.push(user);
     }
@@ -445,7 +448,7 @@ export async function upsertUserInDb(user: UserType) {
         nickname: user.nickname,
         discord: user.discord,
         password: user.password,
-        role: user.role || 'instructor',
+        // DO NOT overwrite role on conflict update - role is strictly managed by administrators via updateUserRoleInDb!
         rank: user.rank,
         callsign: user.callsign,
         avatarUrl: user.avatarUrl,
@@ -460,7 +463,7 @@ export async function updateUserRoleInDb(staticId: string, role: string) {
   updateInMemoryStore((prev) => {
     const updatedUsers = prev.users.map((u) => (u.staticId === staticId ? { ...u, role: role as UserType['role'] } : u));
     let updatedAdmins = [...prev.admins];
-    if (role === 'admin' || role === 'superadmin') {
+    if (role === 'admin' || role === 'superadmin' || role === 'senior_instructor') {
       if (!updatedAdmins.includes(staticId)) {
         updatedAdmins.push(staticId);
       }
@@ -473,7 +476,7 @@ export async function updateUserRoleInDb(staticId: string, role: string) {
   if (!isDbAvailable()) return;
   try {
     await db.update(users).set({ role }).where(eq(users.staticId, staticId));
-    if (role === 'admin' || role === 'superadmin') {
+    if (role === 'admin' || role === 'superadmin' || role === 'senior_instructor') {
       await db.insert(admins).values({ staticId }).onConflictDoNothing();
     } else if (staticId !== '21358') {
       await db.delete(admins).where(eq(admins.staticId, staticId));
