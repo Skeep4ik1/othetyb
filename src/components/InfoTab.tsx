@@ -1,22 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Info, 
   Shield, 
   Award, 
-  FileText, 
   CheckCircle2, 
-  Users, 
   HelpCircle, 
   BookOpen, 
-  Zap, 
   ChevronDown, 
-  ChevronUp, 
-  ExternalLink,
-  Target,
-  Clock,
-  Sparkles,
-  AlertCircle
+  ChevronUp
 } from 'lucide-react';
 
 export const InfoTab: React.FC = () => {
@@ -37,7 +28,7 @@ export const InfoTab: React.FC = () => {
     },
     {
       q: 'За что отклоняется рапорт?',
-      a: 'Рапорт может быть отклонён руководствам при отсутствии доказательств, предоставлении некорректных ссылок, фальсификации данных или указании работы, выполненной за пределами отчётной недели.'
+      a: 'Рапорт может быть отклонён руководству при отсутствии доказательств, предоставлении некорректных ссылок, фальсификации данных или указании работы, выполненной за пределами отчётной недели.'
     },
     {
       q: 'Как вычисляются два лучших сотрудника недели?',
@@ -61,7 +52,7 @@ export const InfoTab: React.FC = () => {
               <span>Справочный раздел · Управление «В» ФСБ</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-['Syne']">
-              Регламент & Информация для инструкторов
+              Регламент и информация для инструкторов
             </h1>
             <p className="text-sm text-zinc-400 leading-relaxed font-sans">
               Полный справочник по системе оценивания, начислению баллов, правилам подачи отчётности и структуре руководства Управления «В».
@@ -70,11 +61,11 @@ export const InfoTab: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3 shrink-0">
             <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-center">
-              <span className="block text-xl font-extrabold text-white font-['Unbounded']">15 б.</span>
+              <span className="block text-xl font-extrabold text-white font-mono">15 б.</span>
               <span className="text-[11px] text-zinc-400 font-mono">Макс. ставка</span>
             </div>
             <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-center">
-              <span className="block text-xl font-extrabold text-sky-400 font-['Unbounded']">4 кат.</span>
+              <span className="block text-xl font-extrabold text-sky-400 font-mono">4 кат.</span>
               <span className="text-[11px] text-zinc-400 font-mono">Деятельности</span>
             </div>
           </div>
@@ -93,11 +84,11 @@ export const InfoTab: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Item 1 */}
           <div className="p-5 rounded-2xl bg-[#121212] border border-zinc-800 hover:border-sky-500/40 transition-all space-y-3 relative overflow-hidden group">
-            <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 font-bold text-lg font-mono">
+            <div className="flex items-center justify-between gap-2">
+              <div className="px-3 py-1.5 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 font-extrabold text-sm font-mono whitespace-nowrap shrink-0">
                 3 б.
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+              <span className="text-[10px] font-mono px-2 py-1 rounded bg-zinc-800 text-zinc-300 border border-zinc-700 whitespace-nowrap">
                 за 1 отчёт
               </span>
             </div>
@@ -111,11 +102,11 @@ export const InfoTab: React.FC = () => {
 
           {/* Item 2 */}
           <div className="p-5 rounded-2xl bg-[#121212] border border-zinc-800 hover:border-amber-500/40 transition-all space-y-3 relative overflow-hidden group">
-            <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-lg font-mono">
+            <div className="flex items-center justify-between gap-2">
+              <div className="px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-extrabold text-sm font-mono whitespace-nowrap shrink-0">
                 15 б.
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
+              <span className="text-[10px] font-mono px-2 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 whitespace-nowrap">
                 ТОП ставка
               </span>
             </div>
@@ -129,11 +120,11 @@ export const InfoTab: React.FC = () => {
 
           {/* Item 3 */}
           <div className="p-5 rounded-2xl bg-[#121212] border border-zinc-800 hover:border-emerald-500/40 transition-all space-y-3 relative overflow-hidden group">
-            <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-lg font-mono">
+            <div className="flex items-center justify-between gap-2">
+              <div className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-extrabold text-sm font-mono whitespace-nowrap shrink-0">
                 2 б.
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+              <span className="text-[10px] font-mono px-2 py-1 rounded bg-zinc-800 text-zinc-300 border border-zinc-700 whitespace-nowrap">
                 за 1 задержание
               </span>
             </div>
@@ -147,11 +138,11 @@ export const InfoTab: React.FC = () => {
 
           {/* Item 4 */}
           <div className="p-5 rounded-2xl bg-[#121212] border border-zinc-800 hover:border-purple-500/40 transition-all space-y-3 relative overflow-hidden group">
-            <div className="flex items-center justify-between">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 font-bold text-lg font-mono">
+            <div className="flex items-center justify-between gap-2">
+              <div className="px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 font-extrabold text-sm font-mono whitespace-nowrap shrink-0">
                 10 б.
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+              <span className="text-[10px] font-mono px-2 py-1 rounded bg-zinc-800 text-zinc-300 border border-zinc-700 whitespace-nowrap">
                 за 1 МП
               </span>
             </div>
