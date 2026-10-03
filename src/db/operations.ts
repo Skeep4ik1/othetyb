@@ -593,10 +593,12 @@ export async function upsertUserInDb(user: UserType) {
     const idx = prev.users.findIndex((u) => u.staticId === user.staticId);
     const updatedUsers = [...prev.users];
     if (idx >= 0) {
-      // PRESERVE the existing role! Do not let a profile update or default value downgrade the role!
+      // PRESERVE existing role AND avatarUrl if incoming is undefined or empty!
       const currentRole = prev.users[idx].role || 'instructor';
+      const currentAvatar = prev.users[idx].avatarUrl;
       const roleToKeep = (user.role && user.role !== 'instructor') ? user.role : currentRole;
-      updatedUsers[idx] = { ...updatedUsers[idx], ...user, role: roleToKeep };
+      const avatarToKeep = (user.avatarUrl && user.avatarUrl.trim()) ? user.avatarUrl.trim() : currentAvatar;
+      updatedUsers[idx] = { ...updatedUsers[idx], ...user, role: roleToKeep, avatarUrl: avatarToKeep };
     } else {
       updatedUsers.push(user);
     }
@@ -605,6 +607,20 @@ export async function upsertUserInDb(user: UserType) {
 
   if (!isDbAvailable()) return;
   try {
+    const updatePayload: Record<string, any> = {
+      nickname: user.nickname,
+      discord: user.discord,
+      password: user.password,
+      rank: user.rank,
+      callsign: user.callsign,
+    };
+    if (user.avatarUrl && user.avatarUrl.trim()) {
+      updatePayload.avatarUrl = user.avatarUrl.trim();
+    }
+    if (user.role && user.role !== 'instructor') {
+      updatePayload.role = user.role;
+    }
+
     await db.insert(users).values({
       staticId: user.staticId,
       nickname: user.nickname,
@@ -616,15 +632,7 @@ export async function upsertUserInDb(user: UserType) {
       avatarUrl: user.avatarUrl,
     }).onConflictDoUpdate({
       target: users.staticId,
-      set: {
-        nickname: user.nickname,
-        discord: user.discord,
-        password: user.password,
-        // DO NOT overwrite role on conflict update - role is strictly managed by administrators via updateUserRoleInDb!
-        rank: user.rank,
-        callsign: user.callsign,
-        avatarUrl: user.avatarUrl,
-      },
+      set: updatePayload,
     });
   } catch (err) {
     console.error('Error upserting user in Cloud SQL:', err);
