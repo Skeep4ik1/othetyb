@@ -96,11 +96,34 @@ export const DEFAULT_USERS: User[] = [
     callsign: 'Ватковский',
     createdAt: '2026-01-05T00:00:00.000Z',
   },
+  {
+    nickname: 'Ангелина Романова',
+    staticId: '44513',
+    discord: 'angelina_romanova',
+    role: 'instructor',
+    rank: 'Инструктор отдела',
+    callsign: 'Романова',
+    createdAt: '2026-01-02T12:00:00.000Z',
+  },
 ];
 
 export const DEMO_USERS = DEFAULT_USERS;
 
 export const INITIAL_REPORTS: Report[] = [
+  {
+    id: 'rep-44513-01',
+    userId: '44513',
+    nickname: 'Ангелина Романова',
+    discord: 'angelina_romanova',
+    date: '2026-10-03T11:00:00.000Z',
+    checkedReports: 3,
+    gatherings: 2,
+    arrests: 5,
+    events: 4,
+    status: 'approved',
+    proofUrl: 'https://imgur.com/gallery/example_angelina',
+    notes: 'Отчёт о выполненной работе',
+  },
   {
     id: 'rep-19119-01',
     userId: '19119',
