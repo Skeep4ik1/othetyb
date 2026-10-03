@@ -119,39 +119,13 @@ function MainApp() {
         }
 
         if (serverDb.reports) {
-          const serverReportMap = new Map<string, Report>();
-          serverDb.reports.forEach((r) => serverReportMap.set(r.id, r));
-
-          let mergedReports = [...serverDb.reports];
-          if (stored.reports) {
-            for (const localR of stored.reports) {
-              if (localR.id && !serverReportMap.has(localR.id)) {
-                mergedReports.unshift(localR);
-                apiAddReport(localR);
-              }
-            }
-          }
-
-          setReports(mergedReports);
-          localStorage.setItem('depV_reports', JSON.stringify(mergedReports));
+          setReports(serverDb.reports);
+          localStorage.setItem('depV_reports', JSON.stringify(serverDb.reports));
         }
 
         if (serverDb.archives) {
-          const serverArchiveMap = new Map<string, WeeklyArchive>();
-          serverDb.archives.forEach((a) => serverArchiveMap.set(a.id, a));
-
-          let mergedArchives = [...serverDb.archives];
-          if (stored.archives) {
-            for (const localA of stored.archives) {
-              if (localA.id && !serverArchiveMap.has(localA.id)) {
-                mergedArchives.unshift(localA);
-                apiSaveArchive(localA);
-              }
-            }
-          }
-
-          setArchives(mergedArchives);
-          localStorage.setItem('depV_archives', JSON.stringify(mergedArchives));
+          setArchives(serverDb.archives);
+          localStorage.setItem('depV_archives', JSON.stringify(serverDb.archives));
         }
 
         if (serverDb.admins) {
@@ -334,13 +308,21 @@ function MainApp() {
   };
 
   const handleDeleteArchive = async (archiveId: string) => {
-    setArchives((prev) => prev.filter((a) => a.id !== archiveId));
+    setArchives((prev) => {
+      const updated = prev.filter((a) => a.id !== archiveId);
+      localStorage.setItem('depV_archives', JSON.stringify(updated));
+      return updated;
+    });
     await apiDeleteArchive(archiveId);
     showToast('Архив за неделю удалён', 'info');
   };
 
   const handleDeleteReport = async (reportId: string) => {
-    setReports((prev) => prev.filter((r) => r.id !== reportId));
+    setReports((prev) => {
+      const updated = prev.filter((r) => r.id !== reportId);
+      localStorage.setItem('depV_reports', JSON.stringify(updated));
+      return updated;
+    });
     await apiDeleteReport(reportId);
     showToast('Рапорт удалён', 'info');
   };

@@ -152,8 +152,11 @@ export const isDbAvailable = () => {
   return true;
 };
 
+let isSeeded = false;
+
 export async function seedInitialAdmin() {
-  if (!isDbAvailable()) return;
+  if (!isDbAvailable() || isSeeded) return;
+  isSeeded = true;
   try {
     const { createPool } = await import('./index.ts');
     const pool = createPool();
