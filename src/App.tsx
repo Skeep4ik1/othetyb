@@ -90,14 +90,27 @@ function MainApp() {
       if (serverDb) {
         if (serverDb.users && serverDb.users.length > 0) {
           const userMap = new Map<string, User>();
-          serverDb.users.forEach((u) => { if (u && u.staticId) userMap.set(u.staticId, u); });
+          serverDb.users.forEach((u) => {
+            if (u && u.staticId) {
+              const av = u.avatarUrl || (u as any).avatar_url;
+              userMap.set(u.staticId, { ...u, avatarUrl: av });
+            }
+          });
 
-          // Check if stored local users have any missing users that server doesn't have yet
+          // Check if stored local users have any missing users or avatars that server doesn't have yet
           if (stored.users) {
             for (const localU of stored.users) {
-              if (localU && localU.staticId && !userMap.has(localU.staticId)) {
-                userMap.set(localU.staticId, localU);
-                apiSaveUser(localU);
+              if (localU && localU.staticId) {
+                const existing = userMap.get(localU.staticId);
+                const localAvatar = localU.avatarUrl || (localU as any).avatar_url;
+                if (!existing) {
+                  userMap.set(localU.staticId, localU);
+                  apiSaveUser(localU);
+                } else if (!existing.avatarUrl && localAvatar) {
+                  const merged = { ...existing, avatarUrl: localAvatar };
+                  userMap.set(localU.staticId, merged);
+                  apiUpdateAvatar(localU.staticId, localAvatar);
+                }
               }
             }
           }

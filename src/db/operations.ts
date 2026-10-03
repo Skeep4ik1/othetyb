@@ -406,20 +406,45 @@ export async function getDbData(): Promise<AppDataType> {
           role: (u.role as UserType['role']) || 'instructor',
           rank: u.rank || undefined,
           callsign: u.callsign || undefined,
-          avatarUrl: u.avatarUrl || undefined,
+          avatarUrl: u.avatarUrl || (u as any).avatar_url || undefined,
           createdAt: u.createdAt ? new Date(u.createdAt).toISOString() : undefined,
         });
       }
     });
 
-    // Ensure initial department instructors are always present if DB table missed any
+    // Ensure users stored in server_data.json / inMemoryStore are also present with avatarUrl preserved
     if (inMemoryStore.users) {
       inMemoryStore.users.forEach((u) => {
-        if (u && u.staticId && !uniqueUsersMap.has(u.staticId)) {
-          uniqueUsersMap.set(u.staticId, u);
+        if (u && u.staticId) {
+          const existing = uniqueUsersMap.get(u.staticId);
+          const av = u.avatarUrl || (u as any).avatar_url || undefined;
+          if (!existing) {
+            uniqueUsersMap.set(u.staticId, { ...u, avatarUrl: av });
+          } else {
+            uniqueUsersMap.set(u.staticId, {
+              ...existing,
+              avatarUrl: existing.avatarUrl || av,
+              rank: existing.rank || u.rank || undefined,
+              callsign: existing.callsign || u.callsign || undefined,
+              password: existing.password || u.password || undefined,
+            });
+          }
         }
       });
     }
+
+    // Ensure any user who submitted a report is also included in the roster
+    dbReports.forEach((r) => {
+      if (r && r.userId && !uniqueUsersMap.has(r.userId)) {
+        uniqueUsersMap.set(r.userId, {
+          staticId: r.userId,
+          nickname: r.nickname,
+          discord: r.discord,
+          role: r.userId === '21358' ? 'superadmin' : 'instructor',
+          createdAt: r.date,
+        });
+      }
+    });
 
     const mappedUsers = Array.from(uniqueUsersMap.values());
 
